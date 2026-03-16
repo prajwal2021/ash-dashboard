@@ -1267,7 +1267,7 @@ Be concise, direct, warm. Answer using the context above. If asked to add a todo
         chatHistory.push({ role:'user', content: msg });
         chatHistory.push({ role:'assistant', content: reply });
         parseActions(msg);
-        return reply;
+        return reply;//
       }
 
       const errData = await resp.json().catch(() => ({}));
