@@ -585,6 +585,10 @@ let viewMonth = new Date(); viewMonth.setDate(1);
 let chatHistory = [];
 let isRecording = false; let recognition = null;
 let lastInputWasVoice = false;
+let voiceSessionActive = false;
+let voiceSilenceTimer = null;
+let voiceAccumulatedTranscript = '';
+const VOICE_SILENCE_MS = 5000;
 
 // Pomodoro state
 let pomoInterval = null;
@@ -1602,12 +1606,17 @@ async function sendChat(useTts) {
 
 function speakReply(text) {
   if (!text) return;
-  const clean = text.replace(/\[[^\]]*\]/g,'').replace(/\([^)]*\)/g,'').slice(0,300);
+  const clean = text.replace(/\[[^\]]*\]/g,'').replace(/\([^)]*\)/g,'').replace(/\*\*/g,'').replace(/\n/g,' ').slice(0,350);
   const u = new SpeechSynthesisUtterance(clean);
-  u.rate = 0.95; u.pitch = 1;
+  u.volume = 1;
+  u.rate = 0.88;
+  u.pitch = 1.15;
+  const voices = speechSynthesis.getVoices();
+  const female = voices.find(v=>/samantha|karen|victoria|moira|tessa/i.test(v.name)) || voices.find(v=>v.lang.startsWith('en')&&/female|woman/i.test(v.name)) || voices.find(v=>v.lang.startsWith('en'));
+  if (female) u.voice = female;
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
-  lastInputWasVoice = false;
+  u.onend = () => { lastInputWasVoice = false; if (voiceSessionActive) setTimeout(startVoiceListening, 800); };
 }
 
 function appendChatMsg(text, role) {
@@ -1734,7 +1743,7 @@ Be concise, direct, warm. Answer using the context above. If asked to add a todo
 }
 
 function parseActions(msg) {
-  const lower = msg.toLowerCase();
+  const lower = msg.toLowerCase().trim();
   const addMatch = msg.match(/(?:add (?:a )?todo[:\s]+|remind me to |add task[:\s]+)(.+)/i);
   if (addMatch) {
     const catMatch = lower.match(/\b(academic|work|personal|code)\b/);
@@ -1743,43 +1752,83 @@ function parseActions(msg) {
     saveTodos();
     renderTodos();
   }
-  const expMatch = msg.match(/(?:spent|paid|add\s+(?:an?\s+)?expense)[:\s]+\$?([\d.]+)\s+(?:on\s+)?(.+)/i);
-  if (expMatch) {
-    const amt = parseFloat(expMatch[1]);
-    const desc = expMatch[2].trim();
-    if (!isNaN(amt) && amt > 0 && desc) {
-      const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery'],transport:['uber','gas','bus','ride','lyft'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
-      let cat = 'other';
-      for(const[c,kws]of Object.entries(catMap)){if(kws.some(k=>desc.toLowerCase().includes(k))){cat=c;break;}}
-      expenses.push({ id:Date.now(), desc, amount:amt, cat, date:new Date().toISOString() });
-      saveExpenses();
-      renderExpenses();
+  // Match: "add expense 50 on X", "spent 50 on X", "add an expense of 50 dollars on X", "log 50 for X", "50 on coffee"
+  const expPatterns = [
+    /(?:add\s+(?:an?\s+)?expenses?|spent|paid|log|record)\s+(?:(?:of|for)\s+)?\$?([\d.]+)\s*(?:dollars?|bucks?|rs?\.?)?\s+(?:on|for)\s+(.+)/i,
+    /(?:add\s+(?:an?\s+)?expenses?|spent|paid|log)\s+\$?([\d.]+)\s+(.+)/i,
+    /(?:add|log)\s+(?:an?\s+)?expenses?[:\s]+(.+?)\s+\$?([\d.]+)\s*$/i,
+    /\$?([\d.]+)\s+(?:dollars?|bucks?)?\s+(?:on|for)\s+(.+)/i,
+  ];
+  for (const re of expPatterns) {
+    const expMatch = msg.match(re);
+    if (expMatch) {
+      const g1 = expMatch[1].trim(), g2 = expMatch[2].replace(/\s*(?:dollars?|bucks?|rs?\.?)\s*$/gi,'').trim();
+      const amt = /^[\d.]+$/.test(g1) ? parseFloat(g1) : parseFloat(g2);
+      const desc = /^[\d.]+$/.test(g1) ? g2 : g1;
+      if (!isNaN(amt) && amt > 0 && desc.length > 1) {
+        const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery','meal'],transport:['uber','gas','bus','ride','lyft'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
+        let cat = 'other';
+        for(const[c,kws]of Object.entries(catMap)){if(kws.some(k=>desc.toLowerCase().includes(k))){cat=c;break;}}
+        expenses.push({ id:Date.now(), desc, amount:amt, cat, date:new Date().toISOString() });
+        saveExpenses();
+        renderExpenses();
+        break;
+      }
     }
   }
 }
 
 // ─── Voice ────────────────────────────────────────────────────────────────
+function startVoiceListening() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+  if (!voiceSessionActive) return;
+  recognition?.stop();
+  voiceAccumulatedTranscript = '';
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+  recognition.continuous = true;
+  recognition.onstart = () => { isRecording = true; document.getElementById('chat-mic')?.classList.add('rec'); };
+  recognition.onresult = e => {
+    let batch = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) voiceAccumulatedTranscript += t + ' ';
+      batch += t;
+    }
+    const inp = document.getElementById('chat-input');
+    if (inp) inp.value = (voiceAccumulatedTranscript + batch).trim();
+    clearTimeout(voiceSilenceTimer);
+    voiceSilenceTimer = setTimeout(() => {
+      const msg = (voiceAccumulatedTranscript || document.getElementById('chat-input')?.value || '').trim();
+      if (msg) {
+        recognition?.stop();
+        lastInputWasVoice = true;
+        document.getElementById('chat-overlay')?.classList.add('open');
+        document.getElementById('chat-toggle-btn')?.classList.add('active-chat');
+        document.getElementById('chat-input').value = msg;
+        setTimeout(() => sendChat(true), 150);
+      }
+      voiceSilenceTimer = null;
+    }, VOICE_SILENCE_MS);
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    if (voiceSessionActive) document.getElementById('chat-mic')?.classList.add('rec');
+    else document.getElementById('chat-mic')?.classList.remove('rec');
+  };
+  recognition.onerror = () => { isRecording = false; document.getElementById('chat-mic')?.classList.remove('rec'); };
+  recognition.start();
+}
+
 function toggleVoice() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { toast('Voice not supported — try Chrome'); return; }
-  if (isRecording) { recognition?.stop(); return; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR(); recognition.lang='en-US'; recognition.interimResults=true; recognition.continuous=false;
-  recognition.onstart = () => { isRecording=true; document.getElementById('chat-mic').classList.add('rec'); };
-  recognition.onresult = e => {
-    let final='',interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
-    document.getElementById('chat-input').value=final||interim;
-    if(final){
-      recognition.stop();
-      lastInputWasVoice = true;
-      document.getElementById('chat-overlay')?.classList.add('open');
-      document.getElementById('chat-toggle-btn')?.classList.add('active-chat');
-      setTimeout(()=>sendChat(true),200);
-    }
-  };
-  recognition.onend = () => { isRecording=false; document.getElementById('chat-mic').classList.remove('rec'); };
-  recognition.onerror = () => { isRecording=false; document.getElementById('chat-mic').classList.remove('rec'); };
-  recognition.start();
+  voiceSessionActive = !voiceSessionActive;
+  document.getElementById('chat-overlay')?.classList.add('open');
+  document.getElementById('chat-toggle-btn')?.classList.add('active-chat');
+  if (voiceSessionActive) startVoiceListening();
+  else { recognition?.stop(); voiceSessionActive = false; clearTimeout(voiceSilenceTimer); document.getElementById('chat-mic')?.classList.remove('rec'); }
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -1808,6 +1857,7 @@ function parseSetupHash() {
 }
 
 async function init() {
+  if (typeof speechSynthesis !== 'undefined') speechSynthesis.getVoices();
   const fromQR = parseSetupHash();
   initSupabase();
   const synced = await loadFromSupabase();
