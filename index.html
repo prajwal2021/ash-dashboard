@@ -577,13 +577,14 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 <script>
 // ─── Data store ────────────────────────────────────────────────────────────
 let todos = JSON.parse(localStorage.getItem('ash_todos2') || '[]');
-let expenses = JSON.parse(localStorage.getItem('ash_expenses2') || '[]');
+let expenses = (JSON.parse(localStorage.getItem('ash_expenses2') || '[]')).map(e => ({ ...e, desc: e.desc ?? e.description ?? '' }));
 let grades = JSON.parse(localStorage.getItem('ash_grades2') || '[]');
 let canvasData = [];
 let activeTodoCat = 'academic';
 let viewMonth = new Date(); viewMonth.setDate(1);
 let chatHistory = [];
 let isRecording = false; let recognition = null;
+let lastInputWasVoice = false;
 
 // Pomodoro state
 let pomoInterval = null;
@@ -622,7 +623,9 @@ async function sbGet(table) {
 
 async function sbUpsert(table, row) {
   if (!SB) return;
-  try { await SB.from(table).upsert({ ...row, user_id: uid() }); } catch(e) {}
+  let payload = { ...row, user_id: uid() };
+  if (table === 'expenses' && payload.desc !== undefined) payload.description = payload.desc;
+  try { await SB.from(table).upsert(payload); } catch(e) {}
 }
 
 async function sbDelete(table, id) {
@@ -638,7 +641,10 @@ async function loadFromSupabase() {
       sbGet('todos'), sbGet('expenses'), sbGet('grades')
     ]);
     if (td) { todos = td; localStorage.setItem('ash_todos2', JSON.stringify(todos)); }
-    if (ex) { expenses = ex; localStorage.setItem('ash_expenses2', JSON.stringify(expenses)); }
+    if (ex) {
+      expenses = ex.map(e => ({ ...e, desc: e.desc ?? e.description ?? '' }));
+      localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
+    }
     if (gr) { grades = gr.map(g => ({ ...g, items: g.items || [] })); localStorage.setItem('ash_grades2', JSON.stringify(grades)); }
     return true;
   } catch(e) { return false; }
@@ -1451,11 +1457,12 @@ function editExpenseDesc(id) {
   descEl.replaceWith(input);
   input.focus();
   input.select();
-  const save = () => {
+  const save = async () => {
     const val = input.value.trim();
     if (val && val !== orig) {
       exp.desc = val;
-      saveExpenses();
+      await saveExpenses();
+      localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
       renderExpenses();
       toast('Updated');
     } else {
@@ -1576,10 +1583,11 @@ async function deleteCourse(gi) {
 
 
 // ─── Chat ──────────────────────────────────────────────────────────────────
-async function sendChat() {
+async function sendChat(useTts) {
   const inp = document.getElementById('chat-input');
   const msg = inp.value.trim();
   if (!msg) return;
+  const fromVoice = useTts || lastInputWasVoice;
   inp.value = ''; inp.style.height = 'auto';
   appendChatMsg(msg, 'user');
   const tid = showTyping();
@@ -1587,7 +1595,19 @@ async function sendChat() {
     const reply = await callClaude(msg);
     removeTyping(tid);
     appendChatMsg(reply, 'assistant');
-  } catch(e) { removeTyping(tid); appendChatMsg('Error: ' + e.message, 'assistant'); }
+    if (fromVoice && typeof speechSynthesis !== 'undefined') speakReply(reply);
+    else if (fromVoice) lastInputWasVoice = false;
+  } catch(e) { removeTyping(tid); appendChatMsg('Error: ' + e.message, 'assistant'); lastInputWasVoice = false; }
+}
+
+function speakReply(text) {
+  if (!text) return;
+  const clean = text.replace(/\[[^\]]*\]/g,'').replace(/\([^)]*\)/g,'').slice(0,300);
+  const u = new SpeechSynthesisUtterance(clean);
+  u.rate = 0.95; u.pitch = 1;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+  lastInputWasVoice = false;
 }
 
 function appendChatMsg(text, role) {
@@ -1721,16 +1741,20 @@ function parseActions(msg) {
     const cat = catMatch ? catMatch[1] : 'personal';
     todos.push({ id:Date.now(), text:addMatch[1].replace(new RegExp(`\\b(academic|work|personal|code)\\b`,'i'),'').trim(), cat, done:false, created:new Date().toISOString() });
     saveTodos();
+    renderTodos();
   }
-  const expMatch = msg.match(/(?:spent|paid|add expense)[:\s]+\$?([\d.]+)\s+(?:on\s+)?(.+)/i);
+  const expMatch = msg.match(/(?:spent|paid|add\s+(?:an?\s+)?expense)[:\s]+\$?([\d.]+)\s+(?:on\s+)?(.+)/i);
   if (expMatch) {
     const amt = parseFloat(expMatch[1]);
     const desc = expMatch[2].trim();
-    const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery'],transport:['uber','gas','bus'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
-    let cat = 'other';
-    for(const[c,kws]of Object.entries(catMap)){if(kws.some(k=>desc.includes(k))){cat=c;break;}}
-    expenses.push({ id:Date.now(), desc, amount:amt, cat, date:new Date().toISOString() });
-    saveExpenses();
+    if (!isNaN(amt) && amt > 0 && desc) {
+      const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery'],transport:['uber','gas','bus','ride','lyft'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
+      let cat = 'other';
+      for(const[c,kws]of Object.entries(catMap)){if(kws.some(k=>desc.toLowerCase().includes(k))){cat=c;break;}}
+      expenses.push({ id:Date.now(), desc, amount:amt, cat, date:new Date().toISOString() });
+      saveExpenses();
+      renderExpenses();
+    }
   }
 }
 
@@ -1745,7 +1769,13 @@ function toggleVoice() {
     let final='',interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
     document.getElementById('chat-input').value=final||interim;
-    if(final){recognition.stop();setTimeout(()=>sendChat(),200);}
+    if(final){
+      recognition.stop();
+      lastInputWasVoice = true;
+      document.getElementById('chat-overlay')?.classList.add('open');
+      document.getElementById('chat-toggle-btn')?.classList.add('active-chat');
+      setTimeout(()=>sendChat(true),200);
+    }
   };
   recognition.onend = () => { isRecording=false; document.getElementById('chat-mic').classList.remove('rec'); };
   recognition.onerror = () => { isRecording=false; document.getElementById('chat-mic').classList.remove('rec'); };
