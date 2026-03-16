@@ -354,7 +354,10 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="card">
         <div class="card-header">
           <div class="card-title">Transactions</div>
-          <button class="card-action" onclick="exportExpenses()">export</button>
+          <span>
+            <button class="card-action" id="exp-sync-btn" onclick="pullFromCloud()" style="display:none">↺ sync</button>
+            <button class="card-action" onclick="exportExpenses()">export</button>
+          </span>
         </div>
         <div id="exp-list"></div>
         <div class="add-exp-row">
@@ -434,13 +437,18 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
         <input type="password" id="s-sb-key" placeholder="eyJ..." />
         <div class="hint">Supabase → Project Settings → API → anon public key</div>
       </div>
+      <div class="sfield" style="background:rgba(139,124,248,0.08);border:1px solid rgba(139,124,248,0.3);border-radius:10px;padding:12px;margin-bottom:8px">
+        <label>Sync name — same on all devices</label>
+        <input type="text" id="s-sync-name" placeholder="e.g. prajwal" style="font-family:var(--mono)" />
+        <div class="hint">Type the same name on your phone and laptop so expenses/todos sync. Must be identical on every device.</div>
+      </div>
       <div class="sfield">
         <label>Your User ID</label>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="s-uid" placeholder="auto-generated" style="flex:1;font-family:var(--mono);font-size:11px" />
           <button onclick="copyUid()" style="background:var(--s3);border:1px solid var(--b2);color:var(--muted2);border-radius:8px;padding:8px 12px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:var(--mono)">copy</button>
         </div>
-        <div class="hint">Auto-generated and saved permanently on this device. To sync a second device — copy this ID from your first device and paste it into the second device's settings.</div>
+        <div class="hint">Or copy from one device and paste here on another. Sync name above is easier.</div>
       </div>
       <div style="height:1px;background:var(--b1);margin:8px 0 16px"></div>
       <div class="sfield">
@@ -467,6 +475,23 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
         <div class="hint">Ash uses this to personalize every answer.</div>
       </div>
       <button class="save-settings-btn" onclick="saveSettings()">Save & Connect</button>
+      <div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);border-radius:10px">
+        <div style="font-size:11px;color:var(--amber);font-family:var(--mono);margin-bottom:8px">⚠ CLOUD SAVE FAILED? RUN THIS SQL</div>
+        <div style="font-size:11px;color:var(--muted2);line-height:1.6;margin-bottom:8px">Supabase Dashboard → SQL Editor → New query → <button onclick="navigator.clipboard.writeText(document.getElementById('s-sql-setup').value);toast('SQL copied — paste in Supabase SQL Editor')" style="background:var(--purple);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">copy</button> → Run</div>
+        <textarea id="s-sql-setup" readonly style="width:100%;height:120px;font-family:var(--mono);font-size:10px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:10px;color:var(--muted2);resize:vertical">-- Ash Dashboard tables
+create table if not exists expenses (id bigint primary key, user_id text not null, description text, amount decimal, cat text, date timestamptz);
+create table if not exists todos (id bigint primary key, user_id text not null, "text" text, cat text, done boolean, created timestamptz);
+create table if not exists grades (id bigint primary key, user_id text not null, name text, items jsonb default '[]', "targetMax" int);
+alter table expenses enable row level security;
+alter table todos enable row level security;
+alter table grades enable row level security;
+drop policy if exists "expenses_policy" on expenses;
+create policy "expenses_policy" on expenses for all using (true) with check (true);
+drop policy if exists "todos_policy" on todos;
+create policy "todos_policy" on todos for all using (true) with check (true);
+drop policy if exists "grades_policy" on grades;
+create policy "grades_policy" on grades for all using (true) with check (true);</textarea>
+      </div>
       <button onclick="debugConnection()" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--b2);color:var(--muted2);border-radius:12px;font-size:13px;padding:12px;cursor:pointer;font-family:var(--mono)">🔍 test connection</button>
       <div id="debug-out" style="margin-top:12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted2);background:var(--s3);border-radius:8px;padding:12px;display:none"></div>
     </div>
@@ -514,9 +539,28 @@ async function sbGet(table) {
   } catch(e) { return null; }
 }
 
+function toSupabaseRow(table, row) {
+  const r = { ...row, user_id: uid() };
+  if (table === 'expenses' && 'desc' in r) { r.description = r.desc; delete r.desc; }
+  return r;
+}
+function fromSupabaseRow(table, row) {
+  if (table === 'expenses') {
+    const { description, desc, ...rest } = row;
+    return { ...rest, desc: desc ?? description };
+  }
+  return row;
+}
 async function sbUpsert(table, row) {
-  if (!SB) return;
-  try { await SB.from(table).upsert({ ...row, user_id: uid() }); } catch(e) {}
+  if (!SB) return { ok: false, err: 'No Supabase' };
+  try {
+    const { error } = await SB.from(table).upsert(toSupabaseRow(table, row));
+    if (error) throw error;
+    return { ok: true };
+  } catch(e) {
+    const msg = e?.message || e?.error_description || String(e);
+    return { ok: false, err: msg };
+  }
 }
 
 async function sbDelete(table, id) {
@@ -524,15 +568,15 @@ async function sbDelete(table, id) {
   try { await SB.from(table).delete().eq('id', id).eq('user_id', uid()); } catch(e) {}
 }
 
-async function loadFromSupabase() {
+async function loadFromSupabase(silent) {
   if (!SB) return false;
-  toast('Loading from cloud...');
+  if (!silent) toast('Loading from cloud...');
   try {
     const [td, ex, gr] = await Promise.all([
       sbGet('todos'), sbGet('expenses'), sbGet('grades')
     ]);
     if (td) { todos = td; localStorage.setItem('ash_todos2', JSON.stringify(todos)); }
-    if (ex) { expenses = ex; localStorage.setItem('ash_expenses2', JSON.stringify(expenses)); }
+    if (ex) { expenses = ex.map(e => fromSupabaseRow('expenses', e)); localStorage.setItem('ash_expenses2', JSON.stringify(expenses)); }
     if (gr) { grades = gr.map(g => ({ ...g, items: g.items || [] })); localStorage.setItem('ash_grades2', JSON.stringify(grades)); }
     return true;
   } catch(e) { return false; }
@@ -541,53 +585,40 @@ async function loadFromSupabase() {
 // Migrate existing localStorage data up to Supabase on first connect
 async function migrateLocalToSupabase() {
   if (!SB) return;
-  // Check if Supabase already has data — if so, don't overwrite
   const existing = await sbGet('expenses');
   const hasCloudData = existing && existing.length > 0;
   if (hasCloudData) {
-    // Cloud already has data — pull it down instead of overwriting
     toast('Cloud has existing data — loading it...');
     return;
   }
-
-  // Cloud is empty — push everything local up
   const localTodos    = JSON.parse(localStorage.getItem('ash_todos2')    || '[]');
   const localExpenses = JSON.parse(localStorage.getItem('ash_expenses2') || '[]');
   const localGrades   = JSON.parse(localStorage.getItem('ash_grades2')   || '[]');
-
   const total = localTodos.length + localExpenses.length + localGrades.length;
   if (total === 0) return;
-
   toast(`Migrating ${total} items to cloud...`);
-
-  try {
-    await Promise.all([
-      ...localTodos.map(t => sbUpsert('todos', t)),
-      ...localExpenses.map(e => sbUpsert('expenses', e)),
-      ...localGrades.map(g => sbUpsert('grades', g))
-    ]);
-    // Mark migration done so we never run it again on this device
-    localStorage.setItem('ash_migrated', '1');
-    toast(`✓ Migrated ${total} items to cloud`);
-  } catch(e) {
-    toast('Migration partial — some items may not have synced');
-  }
+  let errMsg = '';
+  for (const t of localTodos) { const r = await sbUpsert('todos', t); if (!r.ok) { errMsg = r.err; break; } }
+  if (!errMsg) for (const e of localExpenses) { const r = await sbUpsert('expenses', e); if (!r.ok) { errMsg = r.err; break; } }
+  if (!errMsg) for (const g of localGrades) { const r = await sbUpsert('grades', g); if (!r.ok) { errMsg = r.err; break; } }
+  localStorage.setItem('ash_migrated', '1');
+  if (errMsg) toast('⚠ ' + errMsg);
+  else toast(`✓ Migrated ${total} items to cloud`);
 }
 
 async function saveTodos() {
   localStorage.setItem('ash_todos2', JSON.stringify(todos));
-  // Sync all todos to Supabase (upsert each)
-  if (SB) for (const t of todos) await sbUpsert('todos', t);
+  if (SB) { for (const t of todos) { const r = await sbUpsert('todos', t); if (!r.ok) { toast('⚠ ' + r.err); break; } } }
 }
 
 async function saveExpenses() {
   localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
-  if (SB) for (const e of expenses) await sbUpsert('expenses', e);
+  if (SB) { for (const e of expenses) { const r = await sbUpsert('expenses', e); if (!r.ok) { toast('⚠ ' + r.err); break; } } }
 }
 
 async function saveGrades() {
   localStorage.setItem('ash_grades2', JSON.stringify(grades));
-  if (SB) for (const g of grades) await sbUpsert('grades', g);
+  if (SB) { for (const g of grades) { const r = await sbUpsert('grades', g); if (!r.ok) { toast('⚠ ' + r.err); break; } } }
 }
 
 // ─── Settings ──────────────────────────────────────────────────────────────
@@ -608,8 +639,9 @@ function openSettings() {
   const sbKeyInput = document.getElementById('s-sb-key');
   sbKeyInput.value = '';
   sbKeyInput.placeholder = s.sbKey ? '●●●● already saved — paste new to update' : 'eyJ...';
-  // Show the actual uid so user can copy it to other devices
-  document.getElementById('s-uid').value = uid();
+  const currentUid = uid();
+  document.getElementById('s-sync-name').value = currentUid.startsWith('usr_') ? '' : currentUid;
+  document.getElementById('s-uid').value = currentUid;
   const apikeyInput = document.getElementById('s-apikey');
   apikeyInput.value = '';
   apikeyInput.placeholder = s.apiKey ? '●●●● already saved — paste new to update' : 'AIza...';
@@ -656,7 +688,8 @@ function toggleChat(forceClose) {
 async function saveSettings() {
   const sbUrl  = document.getElementById('s-sb-url').value.trim().replace(/\/$/,'');
   const sbKey  = document.getElementById('s-sb-key').value.trim();
-  const uid_v  = document.getElementById('s-uid').value.trim();
+  const syncName = document.getElementById('s-sync-name').value.trim();
+  const uid_v  = syncName || document.getElementById('s-uid').value.trim();
   const k      = document.getElementById('s-apikey').value.trim();
   const n      = document.getElementById('s-name').value.trim();
   const c      = document.getElementById('s-city').value.trim();
@@ -694,13 +727,28 @@ async function saveSettings() {
   if (ical) syncCanvas();
 }
 
+// ─── Pull from cloud ──────────────────────────────────────────────────────
+async function pullFromCloud() {
+  if (!SB) { toast('Connect Supabase in ⚙ settings'); return; }
+  const ok = await loadFromSupabase(false);
+  if (ok) {
+    renderTodos(); renderExpenses(); renderGrades();
+    toast('✓ Synced from cloud');
+  } else { toast('Sync failed'); }
+}
+
 // ─── Navigation ────────────────────────────────────────────────────────────
-function switchPage(name, el) {
+async function switchPage(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll(`.nav-tab[data-page="${name}"]`).forEach(t => t.classList.add('active'));
   document.getElementById('scroll').scrollTop = 0;
+  // Pull fresh data from cloud when switching to data pages
+  if (SB && (name === 'expenses' || name === 'todos' || name === 'grades')) {
+    const ok = await loadFromSupabase(true);
+    if (ok) { /* data updated in loadFromSupabase */ }
+  }
   if (name === 'expenses') renderExpenses();
   if (name === 'todos') renderTodos();
   if (name === 'grades') renderGrades();
@@ -1034,11 +1082,21 @@ function renderExpenses() {
         <div class="exp-desc">${e.desc}</div>
         <div class="exp-cat">${e.cat}</div>
       </div>
-      <div style="text-align:right">
-        <div class="exp-amt" style="color:${expColors[e.cat]||'var(--text)'}">$${e.amount.toFixed(2)}</div>
-        <div class="exp-date">${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      <div style="text-align:right;display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <div>
+          <div class="exp-amt" style="color:${expColors[e.cat]||'var(--text)'}">$${e.amount.toFixed(2)}</div>
+          <div class="exp-date">${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+        </div>
+        <button class="todo-del" onclick="deleteExpense(${e.id})" title="Delete">✕</button>
       </div>
     </div>`).join('') : '<div class="empty" style="padding:16px 0">No transactions this month</div>';
+}
+
+async function deleteExpense(id) {
+  await sbDelete('expenses', id);
+  expenses = expenses.filter(e => e.id !== id);
+  localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
+  renderExpenses();
 }
 
 function addExpense() {
@@ -1267,7 +1325,7 @@ Be concise, direct, warm. Answer using the context above. If asked to add a todo
         chatHistory.push({ role:'user', content: msg });
         chatHistory.push({ role:'assistant', content: reply });
         parseActions(msg);
-        return reply;//
+        return reply;
       }
 
       const errData = await resp.json().catch(() => ({}));
@@ -1352,9 +1410,16 @@ async function init() {
   const s = cfg();
   if (s.icalUrl) syncCanvas();
   if (!s.apiKey) setTimeout(() => { toast('⚙ Get a free Gemini key at aistudio.google.com'); }, 2000);
-  // Show sync status in topbar
   updateSyncBadge();
   if (SB && synced) setTimeout(() => toast(`Cloud sync active — ID: ${uid().slice(0,12)}...`), 800);
+
+  // Auto-refresh when switching back to tab (e.g. after adding on another device)
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && SB) {
+      const ok = await loadFromSupabase(true);
+      if (ok) { renderTodos(); renderExpenses(); renderGrades(); }
+    }
+  });
 }
 
 async function debugConnection() {
@@ -1387,10 +1452,22 @@ async function debugConnection() {
     try {
       const { data, error } = await SB.from('expenses').select('*').eq('user_id', userId).limit(5);
       if (error) {
-        lines.push(`Query error: ${error.message}`);
+        lines.push(`Select error: ${error.message}`);
       } else {
         lines.push(`Expenses found: ${data.length} rows`);
-        if (data.length > 0) lines.push(`First: ${data[0].desc} $${data[0].amount}`);
+        if (data.length > 0) lines.push(`First: ${(data[0].desc||data[0].description)} $${data[0].amount}`);
+      }
+      // Test write
+      const testRow = { id: 999999999, description: 'test', amount: 0.01, cat: 'other', date: new Date().toISOString(), user_id: userId };
+      const { error: writeErr } = await SB.from('expenses').upsert(testRow);
+      if (writeErr) {
+        lines.push('---');
+        lines.push(`Write error: ${writeErr.message}`);
+        lines.push('Fix: Run the SQL in Settings in Supabase SQL Editor');
+      } else {
+        lines.push('---');
+        lines.push('Write test: ✓ OK');
+        await SB.from('expenses').delete().eq('id', 999999999);
       }
     } catch(e) {
       lines.push(`Fetch threw: ${e.message}`);
@@ -1408,14 +1485,20 @@ async function debugConnection() {
 
 function updateSyncBadge() {
   const badge = document.getElementById('sync-badge');
-  if (!badge) return;
-  if (SB) {
-    badge.textContent = '☁ synced';
-    badge.style.color = '#2dd4bf';
-  } else {
-    badge.textContent = '⚠ local only';
-    badge.style.color = 'var(--muted)';
+  const expSyncBtn = document.getElementById('exp-sync-btn');
+  if (badge) {
+    if (SB) {
+      const u = uid();
+      badge.textContent = '☁ ' + (u.length > 12 ? u.slice(0,8)+'…' : u);
+      badge.title = 'Sync ID: ' + u + ' — must match on all devices';
+      badge.style.color = '#2dd4bf';
+    } else {
+      badge.textContent = '⚠ local only';
+      badge.title = '';
+      badge.style.color = 'var(--muted)';
+    }
   }
+  if (expSyncBtn) expSyncBtn.style.display = SB ? 'inline' : 'none';
 }
 
 init();
