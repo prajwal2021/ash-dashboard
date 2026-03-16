@@ -1610,8 +1610,8 @@ function speakReply(text) {
   const clean = text.replace(/\[[^\]]*\]/g,'').replace(/\([^)]*\)/g,'').replace(/\*\*/g,'').replace(/\n/g,' ').slice(0,350);
   const u = new SpeechSynthesisUtterance(clean);
   u.volume = 2;
-  u.rate = 1.5;
-  u.pitch = 2;
+  u.rate = 1;
+  u.pitch = 1.5;
   const voices = speechSynthesis.getVoices();
   const female = voices.find(v=>/samantha|karen|victoria|moira|tessa/i.test(v.name)) || voices.find(v=>v.lang.startsWith('en')&&/female|woman/i.test(v.name)) || voices.find(v=>v.lang.startsWith('en'));
   if (female) u.voice = female;
