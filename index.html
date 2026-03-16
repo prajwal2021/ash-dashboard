@@ -151,6 +151,9 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .exp-date{font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0}
 .exp-del{font-size:14px;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:6px;background:none;border:none;transition:color .15s,background .15s;flex-shrink:0}
 .exp-del:hover{color:var(--rose);background:var(--rose-dim)}
+.exp-edit{font-size:14px;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:6px;background:none;border:none;transition:color .15s,background .15s;flex-shrink:0}
+.exp-edit:hover{color:var(--purple);background:var(--purple-dim)}
+.exp-edit-input{width:100%;background:var(--s3);border:1px solid var(--purple);border-radius:6px;color:var(--text);font-size:13px;padding:6px 10px;outline:none;font-family:var(--sans)}
 
 .add-exp-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .add-exp-input{flex:1;min-width:120px;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
@@ -1399,16 +1402,17 @@ function renderExpenses() {
   // List (newest first)
   const recent = [...monthExp].sort((a,b) => new Date(b.date)-new Date(a.date));
   document.getElementById('exp-list').innerHTML = recent.length ? recent.map(e => `
-    <div class="exp-item">
+    <div class="exp-item" id="exp-row-${e.id}">
       <div class="exp-icon" style="background:${expColors[e.cat]||'#333'}22">${expIcons[e.cat]||'📦'}</div>
-      <div class="exp-info">
-        <div class="exp-desc">${e.desc}</div>
+      <div class="exp-info" style="flex:1;min-width:0">
+        <div class="exp-desc" id="exp-desc-${e.id}">${(e.desc||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
         <div class="exp-cat">${e.cat} <span style="color:var(--muted);font-size:10px">· ${getMerchant(e.desc)}</span></div>
       </div>
       <div style="text-align:right">
         <div class="exp-amt" style="color:${expColors[e.cat]||'var(--text)'}">$${e.amount.toFixed(2)}</div>
         <div class="exp-date">${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
       </div>
+      <button class="exp-edit" onclick="event.stopPropagation();editExpenseDesc('${e.id}')" title="Edit description">✎</button>
       <button class="exp-del" onclick="event.stopPropagation();deleteExpense('${e.id}')" title="Delete expense">🗑</button>
     </div>`).join('') : '<div class="empty" style="padding:16px 0">No transactions this month</div>';
 }
@@ -1432,6 +1436,42 @@ async function deleteExpense(id) {
   localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
   renderExpenses();
   toast('Expense removed');
+}
+
+function editExpenseDesc(id) {
+  const exp = expenses.find(e => String(e.id) === String(id));
+  if (!exp) return;
+  const descEl = document.getElementById('exp-desc-' + id);
+  if (!descEl) return;
+  const orig = exp.desc;
+  const input = document.createElement('input');
+  input.className = 'exp-edit-input';
+  input.value = orig;
+  input.placeholder = 'Description...';
+  descEl.replaceWith(input);
+  input.focus();
+  input.select();
+  const save = () => {
+    const val = input.value.trim();
+    if (val && val !== orig) {
+      exp.desc = val;
+      saveExpenses();
+      renderExpenses();
+      toast('Updated');
+    } else {
+      input.replaceWith(descEl);
+      descEl.textContent = orig;
+    }
+  };
+  const cancel = () => {
+    input.replaceWith(descEl);
+    descEl.textContent = orig;
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  });
 }
 
 function exportExpenses() {
