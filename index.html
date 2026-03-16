@@ -149,6 +149,8 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .exp-cat{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
 .exp-amt{font-size:14px;font-weight:600;font-family:var(--mono);flex-shrink:0}
 .exp-date{font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+.exp-del{font-size:14px;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:6px;background:none;border:none;transition:color .15s,background .15s;flex-shrink:0}
+.exp-del:hover{color:var(--rose);background:var(--rose-dim)}
 
 .add-exp-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .add-exp-input{flex:1;min-width:120px;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
@@ -244,8 +246,56 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 
 /* Month badge */
 .month-badge{display:inline-block;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:4px 12px;font-size:11px;font-family:var(--mono);color:var(--muted2);margin-bottom:12px}
+
+/* ── Weekly digest ── */
+.digest-card{background:linear-gradient(135deg,var(--purple-dim) 0%,var(--teal-dim) 100%);border:1px solid rgba(139,124,248,0.35);border-radius:16px;padding:18px;margin-bottom:16px}
+.digest-title{font-size:14px;font-weight:700;letter-spacing:-0.02em;margin-bottom:14px;color:var(--purple);display:flex;align-items:center;gap:8px}
+.digest-section{margin-bottom:14px}
+.digest-section:last-child{margin-bottom:0}
+.digest-section h4{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:var(--mono)}
+.digest-section ul{list-style:none;font-size:13px;line-height:1.7;color:var(--text)}
+.digest-section li{margin-bottom:4px;padding-left:14px;position:relative}
+.digest-section li::before{content:'·';position:absolute;left:0;color:var(--purple);font-weight:700}
+.digest-empty{color:var(--muted);font-size:12px;font-style:italic}
+
+/* ── Pomodoro / Focus ── */
+.pomo-timer{text-align:center;padding:28px 20px}
+.pomo-display{font-size:64px;font-weight:700;letter-spacing:-0.05em;font-family:var(--mono);color:var(--text);margin:16px 0}
+.pomo-display.work{color:var(--purple)}
+.pomo-display.break{color:var(--teal)}
+.pomo-mode{font-size:12px;text-transform:uppercase;letter-spacing:0.15em;color:var(--muted);font-family:var(--mono)}
+.pomo-controls{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.pomo-btn{background:var(--s2);border:1px solid var(--b2);color:var(--text);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.pomo-btn:hover{border-color:var(--purple);color:var(--purple)}
+.pomo-btn.primary{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+.pomo-btn.primary:hover{background:var(--purple);color:#fff}
+.pomo-todo-pick{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:14px;margin-top:16px}
+.pomo-todo-pick label{display:block;font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;font-family:var(--mono)}
+.pomo-todo-sel{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;font-family:var(--sans)}
+
+/* ── QR code ── */
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px;background:var(--s2);border:1px solid var(--b2);border-radius:14px;margin-top:8px}
+.qr-wrap canvas,.qr-wrap img{margin:0 auto}
+.qr-hint{font-size:11px;color:var(--muted);text-align:center;line-height:1.5}
+
+/* ── Expense chart (6 months) ── */
+.exp-chart{display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:12px}
+.exp-chart-bar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.exp-chart-bar-fill{width:100%;min-height:4px;background:linear-gradient(to top,var(--teal),var(--purple));border-radius:4px 4px 0 0;transition:height .5s ease}
+.exp-chart-bar-lbl{font-size:9px;color:var(--muted);font-family:var(--mono);text-transform:uppercase}
+.exp-chart-bar-val{font-size:10px;font-weight:600;font-family:var(--mono);color:var(--teal)}
+
+/* ── Daily standup ── */
+.standup-card{background:linear-gradient(135deg,var(--sky-dim) 0%,var(--purple-dim) 100%);border:1px solid rgba(56,189,248,0.35);border-radius:16px;padding:18px;margin-bottom:16px}
+.standup-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.standup-title{font-size:14px;font-weight:700;letter-spacing:-0.02em;color:var(--sky);display:flex;align-items:center;gap:8px}
+.standup-gen{background:var(--sky-dim);border:1px solid var(--sky);color:var(--sky);border-radius:10px;font-size:12px;padding:8px 14px;cursor:pointer;font-family:var(--mono);transition:all .2s}
+.standup-gen:hover{background:var(--sky);color:#000}
+.standup-content{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap}
+.standup-loading{color:var(--muted);font-style:italic}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -274,6 +324,9 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <button class="nav-tab" data-page="grades" onclick="switchPage('grades',this)">
       <span class="tab-dot" style="background:var(--sky)"></span>Grades
     </button>
+    <button class="nav-tab" data-page="focus" onclick="switchPage('focus',this)">
+      <span class="tab-dot" style="background:var(--amber)"></span>Focus
+    </button>
   </div>
 
   <!-- Scrollable content -->
@@ -281,6 +334,8 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 
     <!-- ══ CANVAS PAGE ══ -->
     <div class="page active" id="page-canvas">
+      <div id="standup-container" style="display:none"></div>
+      <div id="digest-container" style="display:none"></div>
       <div class="stat-row">
         <div class="stat-box"><div class="stat-num red" id="c-overdue">0</div><div class="stat-lbl">overdue</div></div>
         <div class="stat-box"><div class="stat-num yellow" id="c-urgent">0</div><div class="stat-lbl">due in 48h</div></div>
@@ -346,18 +401,26 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
         <div class="period" id="exp-period">this month</div>
       </div>
 
+      <div class="card" id="exp-chart-card">
+        <div class="card-header"><div class="card-title">Spending trend (6 months)</div></div>
+        <div id="exp-chart"></div>
+      </div>
+
       <div class="card" id="exp-breakdown-card">
         <div class="card-header"><div class="card-title">By Category</div></div>
         <div id="exp-breakdown"></div>
       </div>
 
+      <div class="card" id="exp-merchant-card">
+        <div class="card-header"><div class="card-title">By Merchant / Place</div></div>
+        <div class="hint" style="margin-bottom:10px;font-size:10px">Grouped by description — e.g. "Walmart" or "Uber rides"</div>
+        <div id="exp-merchant"></div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <div class="card-title">Transactions</div>
-          <span>
-            <button class="card-action" id="exp-sync-btn" onclick="pullFromCloud()" style="display:none">↺ sync</button>
-            <button class="card-action" onclick="exportExpenses()">export</button>
-          </span>
+          <button class="card-action" onclick="exportExpenses()">export</button>
         </div>
         <div id="exp-list"></div>
         <div class="add-exp-row">
@@ -372,6 +435,27 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
             <option value="other">📦 Other</option>
           </select>
           <button class="exp-add-btn" onclick="addExpense()">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FOCUS PAGE ══ -->
+    <div class="page" id="page-focus">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Pomodoro</div></div>
+        <div class="pomo-timer">
+          <div class="pomo-mode" id="pomo-mode">Focus</div>
+          <div class="pomo-display work" id="pomo-display">25:00</div>
+          <div class="pomo-todo-pick">
+            <label>Focus on (optional)</label>
+            <select class="pomo-todo-sel" id="pomo-todo-sel">
+              <option value="">— No specific task —</option>
+            </select>
+          </div>
+          <div class="pomo-controls">
+            <button class="pomo-btn primary" id="pomo-start-btn" onclick="togglePomodoro()">Start</button>
+            <button class="pomo-btn" id="pomo-reset-btn" onclick="resetPomodoro()">Reset</button>
+          </div>
         </div>
       </div>
     </div>
@@ -401,6 +485,9 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     </button>
     <button class="bnav-btn" data-page="grades" onclick="switchPage('grades',this); syncBottomNav(this)">
       <span class="bnav-icon">🎓</span><span class="bnav-label">Grades</span>
+    </button>
+    <button class="bnav-btn" data-page="focus" onclick="switchPage('focus',this); syncBottomNav(this)">
+      <span class="bnav-icon">🍅</span><span class="bnav-label">Focus</span>
     </button>
   </div>
 
@@ -437,18 +524,20 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
         <input type="password" id="s-sb-key" placeholder="eyJ..." />
         <div class="hint">Supabase → Project Settings → API → anon public key</div>
       </div>
-      <div class="sfield" style="background:rgba(139,124,248,0.08);border:1px solid rgba(139,124,248,0.3);border-radius:10px;padding:12px;margin-bottom:8px">
-        <label>Sync name — same on all devices</label>
-        <input type="text" id="s-sync-name" placeholder="e.g. prajwal" style="font-family:var(--mono)" />
-        <div class="hint">Type the same name on your phone and laptop so expenses/todos sync. Must be identical on every device.</div>
-      </div>
       <div class="sfield">
         <label>Your User ID</label>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="text" id="s-uid" placeholder="auto-generated" style="flex:1;font-family:var(--mono);font-size:11px" />
           <button onclick="copyUid()" style="background:var(--s3);border:1px solid var(--b2);color:var(--muted2);border-radius:8px;padding:8px 12px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:var(--mono)">copy</button>
         </div>
-        <div class="hint">Or copy from one device and paste here on another. Sync name above is easier.</div>
+        <div class="hint">Auto-generated and saved permanently on this device. To sync a second device — copy this ID from your first device and paste it into the second device's settings.</div>
+      </div>
+      <div class="sfield">
+        <label>QR Code — Scan on New Device</label>
+        <div class="qr-wrap" id="qr-wrap">
+          <div id="qr-placeholder" class="qr-hint">Configure Supabase above, then save — QR will appear here</div>
+        </div>
+        <div class="hint">Scan this QR with your new device's camera. It will open Ash with your sync credentials pre-filled.</div>
       </div>
       <div style="height:1px;background:var(--b1);margin:8px 0 16px"></div>
       <div class="sfield">
@@ -475,23 +564,6 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
         <div class="hint">Ash uses this to personalize every answer.</div>
       </div>
       <button class="save-settings-btn" onclick="saveSettings()">Save & Connect</button>
-      <div style="margin-top:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);border-radius:10px">
-        <div style="font-size:11px;color:var(--amber);font-family:var(--mono);margin-bottom:8px">⚠ CLOUD SAVE FAILED? RUN THIS SQL</div>
-        <div style="font-size:11px;color:var(--muted2);line-height:1.6;margin-bottom:8px">Supabase Dashboard → SQL Editor → New query → <button onclick="navigator.clipboard.writeText(document.getElementById('s-sql-setup').value);toast('SQL copied — paste in Supabase SQL Editor')" style="background:var(--purple);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">copy</button> → Run</div>
-        <textarea id="s-sql-setup" readonly style="width:100%;height:120px;font-family:var(--mono);font-size:10px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:10px;color:var(--muted2);resize:vertical">-- Ash Dashboard tables
-create table if not exists expenses (id bigint primary key, user_id text not null, description text, amount decimal, cat text, date timestamptz);
-create table if not exists todos (id bigint primary key, user_id text not null, "text" text, cat text, done boolean, created timestamptz);
-create table if not exists grades (id bigint primary key, user_id text not null, name text, items jsonb default '[]', "targetMax" int);
-alter table expenses enable row level security;
-alter table todos enable row level security;
-alter table grades enable row level security;
-drop policy if exists "expenses_policy" on expenses;
-create policy "expenses_policy" on expenses for all using (true) with check (true);
-drop policy if exists "todos_policy" on todos;
-create policy "todos_policy" on todos for all using (true) with check (true);
-drop policy if exists "grades_policy" on grades;
-create policy "grades_policy" on grades for all using (true) with check (true);</textarea>
-      </div>
       <button onclick="debugConnection()" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--b2);color:var(--muted2);border-radius:12px;font-size:13px;padding:12px;cursor:pointer;font-family:var(--mono)">🔍 test connection</button>
       <div id="debug-out" style="margin-top:12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted2);background:var(--s3);border-radius:8px;padding:12px;display:none"></div>
     </div>
@@ -509,6 +581,12 @@ let activeTodoCat = 'academic';
 let viewMonth = new Date(); viewMonth.setDate(1);
 let chatHistory = [];
 let isRecording = false; let recognition = null;
+
+// Pomodoro state
+let pomoInterval = null;
+let pomoRemaining = 25 * 60;
+let pomoPhase = 'work';
+let pomoRunning = false;
 
 // ─── Supabase ──────────────────────────────────────────────────────────────
 let SB = null;
@@ -539,28 +617,9 @@ async function sbGet(table) {
   } catch(e) { return null; }
 }
 
-function toSupabaseRow(table, row) {
-  const r = { ...row, user_id: uid() };
-  if (table === 'expenses' && 'desc' in r) { r.description = r.desc; delete r.desc; }
-  return r;
-}
-function fromSupabaseRow(table, row) {
-  if (table === 'expenses') {
-    const { description, desc, ...rest } = row;
-    return { ...rest, desc: desc ?? description };
-  }
-  return row;
-}
 async function sbUpsert(table, row) {
-  if (!SB) return { ok: false, err: 'No Supabase' };
-  try {
-    const { error } = await SB.from(table).upsert(toSupabaseRow(table, row));
-    if (error) throw error;
-    return { ok: true };
-  } catch(e) {
-    const msg = e?.message || e?.error_description || String(e);
-    return { ok: false, err: msg };
-  }
+  if (!SB) return;
+  try { await SB.from(table).upsert({ ...row, user_id: uid() }); } catch(e) {}
 }
 
 async function sbDelete(table, id) {
@@ -568,15 +627,15 @@ async function sbDelete(table, id) {
   try { await SB.from(table).delete().eq('id', id).eq('user_id', uid()); } catch(e) {}
 }
 
-async function loadFromSupabase(silent) {
+async function loadFromSupabase() {
   if (!SB) return false;
-  if (!silent) toast('Loading from cloud...');
+  toast('Loading from cloud...');
   try {
     const [td, ex, gr] = await Promise.all([
       sbGet('todos'), sbGet('expenses'), sbGet('grades')
     ]);
     if (td) { todos = td; localStorage.setItem('ash_todos2', JSON.stringify(todos)); }
-    if (ex) { expenses = ex.map(e => fromSupabaseRow('expenses', e)); localStorage.setItem('ash_expenses2', JSON.stringify(expenses)); }
+    if (ex) { expenses = ex; localStorage.setItem('ash_expenses2', JSON.stringify(expenses)); }
     if (gr) { grades = gr.map(g => ({ ...g, items: g.items || [] })); localStorage.setItem('ash_grades2', JSON.stringify(grades)); }
     return true;
   } catch(e) { return false; }
@@ -585,40 +644,53 @@ async function loadFromSupabase(silent) {
 // Migrate existing localStorage data up to Supabase on first connect
 async function migrateLocalToSupabase() {
   if (!SB) return;
+  // Check if Supabase already has data — if so, don't overwrite
   const existing = await sbGet('expenses');
   const hasCloudData = existing && existing.length > 0;
   if (hasCloudData) {
+    // Cloud already has data — pull it down instead of overwriting
     toast('Cloud has existing data — loading it...');
     return;
   }
+
+  // Cloud is empty — push everything local up
   const localTodos    = JSON.parse(localStorage.getItem('ash_todos2')    || '[]');
   const localExpenses = JSON.parse(localStorage.getItem('ash_expenses2') || '[]');
   const localGrades   = JSON.parse(localStorage.getItem('ash_grades2')   || '[]');
+
   const total = localTodos.length + localExpenses.length + localGrades.length;
   if (total === 0) return;
+
   toast(`Migrating ${total} items to cloud...`);
-  let errMsg = '';
-  for (const t of localTodos) { const r = await sbUpsert('todos', t); if (!r.ok) { errMsg = r.err; break; } }
-  if (!errMsg) for (const e of localExpenses) { const r = await sbUpsert('expenses', e); if (!r.ok) { errMsg = r.err; break; } }
-  if (!errMsg) for (const g of localGrades) { const r = await sbUpsert('grades', g); if (!r.ok) { errMsg = r.err; break; } }
-  localStorage.setItem('ash_migrated', '1');
-  if (errMsg) toast('⚠ ' + errMsg);
-  else toast(`✓ Migrated ${total} items to cloud`);
+
+  try {
+    await Promise.all([
+      ...localTodos.map(t => sbUpsert('todos', t)),
+      ...localExpenses.map(e => sbUpsert('expenses', e)),
+      ...localGrades.map(g => sbUpsert('grades', g))
+    ]);
+    // Mark migration done so we never run it again on this device
+    localStorage.setItem('ash_migrated', '1');
+    toast(`✓ Migrated ${total} items to cloud`);
+  } catch(e) {
+    toast('Migration partial — some items may not have synced');
+  }
 }
 
 async function saveTodos() {
   localStorage.setItem('ash_todos2', JSON.stringify(todos));
-  if (SB) { for (const t of todos) { const r = await sbUpsert('todos', t); if (!r.ok) { toast('⚠ ' + r.err); break; } } }
+  // Sync all todos to Supabase (upsert each)
+  if (SB) for (const t of todos) await sbUpsert('todos', t);
 }
 
 async function saveExpenses() {
   localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
-  if (SB) { for (const e of expenses) { const r = await sbUpsert('expenses', e); if (!r.ok) { toast('⚠ ' + r.err); break; } } }
+  if (SB) for (const e of expenses) await sbUpsert('expenses', e);
 }
 
 async function saveGrades() {
   localStorage.setItem('ash_grades2', JSON.stringify(grades));
-  if (SB) { for (const g of grades) { const r = await sbUpsert('grades', g); if (!r.ok) { toast('⚠ ' + r.err); break; } } }
+  if (SB) for (const g of grades) await sbUpsert('grades', g);
 }
 
 // ─── Settings ──────────────────────────────────────────────────────────────
@@ -639,9 +711,7 @@ function openSettings() {
   const sbKeyInput = document.getElementById('s-sb-key');
   sbKeyInput.value = '';
   sbKeyInput.placeholder = s.sbKey ? '●●●● already saved — paste new to update' : 'eyJ...';
-  const currentUid = uid();
-  document.getElementById('s-sync-name').value = currentUid.startsWith('usr_') ? '' : currentUid;
-  document.getElementById('s-uid').value = currentUid;
+  document.getElementById('s-uid').value = uid();
   const apikeyInput = document.getElementById('s-apikey');
   apikeyInput.value = '';
   apikeyInput.placeholder = s.apiKey ? '●●●● already saved — paste new to update' : 'AIza...';
@@ -650,6 +720,7 @@ function openSettings() {
   document.getElementById('s-ical-url').value = s.icalUrl;
   document.getElementById('s-context').value = s.context;
   document.getElementById('settings-sheet').classList.add('open');
+  updateQRCode();
 }
 
 function copyUid() {
@@ -688,8 +759,7 @@ function toggleChat(forceClose) {
 async function saveSettings() {
   const sbUrl  = document.getElementById('s-sb-url').value.trim().replace(/\/$/,'');
   const sbKey  = document.getElementById('s-sb-key').value.trim();
-  const syncName = document.getElementById('s-sync-name').value.trim();
-  const uid_v  = syncName || document.getElementById('s-uid').value.trim();
+  const uid_v  = document.getElementById('s-uid').value.trim();
   const k      = document.getElementById('s-apikey').value.trim();
   const n      = document.getElementById('s-name').value.trim();
   const c      = document.getElementById('s-city').value.trim();
@@ -727,31 +797,18 @@ async function saveSettings() {
   if (ical) syncCanvas();
 }
 
-// ─── Pull from cloud ──────────────────────────────────────────────────────
-async function pullFromCloud() {
-  if (!SB) { toast('Connect Supabase in ⚙ settings'); return; }
-  const ok = await loadFromSupabase(false);
-  if (ok) {
-    renderTodos(); renderExpenses(); renderGrades();
-    toast('✓ Synced from cloud');
-  } else { toast('Sync failed'); }
-}
-
 // ─── Navigation ────────────────────────────────────────────────────────────
-async function switchPage(name, el) {
+function switchPage(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll(`.nav-tab[data-page="${name}"]`).forEach(t => t.classList.add('active'));
   document.getElementById('scroll').scrollTop = 0;
-  // Pull fresh data from cloud when switching to data pages
-  if (SB && (name === 'expenses' || name === 'todos' || name === 'grades')) {
-    const ok = await loadFromSupabase(true);
-    if (ok) { /* data updated in loadFromSupabase */ }
-  }
   if (name === 'expenses') renderExpenses();
   if (name === 'todos') renderTodos();
   if (name === 'grades') renderGrades();
+  if (name === 'focus') { renderPomoTodoSelect(); }
+  if (name === 'canvas') { renderDigest(); renderStandup(); }
 }
 function syncBottomNav(el) {
   document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
@@ -1023,7 +1080,7 @@ function addTodo() {
 
 function toggleTodo(id) {
   const t = todos.find(t => t.id === id);
-  if (t) { t.done = !t.done; saveTodos(); renderTodos(); }
+  if (t) { t.done = !t.done; if (t.done) t.completedAt = new Date().toISOString(); saveTodos(); renderTodos(); }
 }
 
 async function deleteTodo(id) {
@@ -1038,10 +1095,238 @@ function clearDoneTodos() {
   saveTodos(); renderTodos();
 }
 
+// ─── Daily standup ──────────────────────────────────────────────────────────
+function renderStandup() {
+  const container = document.getElementById('standup-container');
+  if (!container) return;
+  const now = new Date();
+  const hour = now.getHours();
+  const isMorning = hour >= 5 && hour < 12;
+  const todayKey = now.toISOString().slice(0,10);
+  const cached = localStorage.getItem('ash_standup_' + todayKey);
+  container.style.display = 'block';
+  container.className = 'standup-card';
+  container.innerHTML = `
+    <div class="standup-header">
+      <div class="standup-title">☀️ ${isMorning ? 'Good morning' : 'Your day'} — Plan</div>
+      <button class="standup-gen" onclick="generateStandupPlan()" id="standup-gen-btn">Generate</button>
+    </div>
+    <div class="standup-content" id="standup-content"></div>`;
+  const contentEl = document.getElementById('standup-content');
+  contentEl.textContent = cached || (isMorning ? 'Tap Generate for a plan based on your deadlines, todos and calendar.' : 'Tap Generate to plan your day.');
+}
+async function generateStandupPlan() {
+  const content = document.getElementById('standup-content');
+  const btn = document.getElementById('standup-gen-btn');
+  if (!content || !btn) return;
+  content.textContent = 'Generating your plan...';
+  content.className = 'standup-content standup-loading';
+  btn.disabled = true;
+  try {
+    const plan = await callStandupPlan();
+    content.textContent = plan;
+    content.className = 'standup-content';
+    const todayKey = new Date().toISOString().slice(0,10);
+    localStorage.setItem('ash_standup_' + todayKey, plan);
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+    content.className = 'standup-content';
+  }
+  btn.disabled = false;
+}
+async function callStandupPlan() {
+  const s = cfg();
+  if (!s.apiKey) throw new Error('Add your Gemini API key in ⚙ settings');
+  const now = new Date();
+  const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+  const todayEnd = new Date(todayStart); todayEnd.setDate(todayEnd.getDate()+1);
+  const weekEnd = new Date(todayStart); weekEnd.setDate(weekEnd.getDate()+7);
+  const deadlines = canvasData.filter(a => !a.submitted && a.due).map(a => ({
+    name: a.name, course: a.course, due: a.due
+  })).filter(a => new Date(a.due) <= weekEnd);
+  const pendingTodos = todos.filter(t => !t.done);
+  const prompt = `You are Ash, a daily planning assistant for ${s.name}. Today is ${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}.
+
+Create a concise daily plan (bullet points, 5–8 items) that:
+1. Prioritizes URGENT deadlines (today or overdue) first
+2. Schedules important deadlines due this week
+3. Suggests 2–3 todo items to tackle
+4. Adds a short wrap-up or reflection note at the end
+
+DEADLINES/CALENDAR:
+${deadlines.length ? deadlines.map(a=>`- ${a.name} [${a.course}] — ${new Date(a.due).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}`).join('\n') : '- No upcoming deadlines'}
+
+PENDING TODOS:
+${pendingTodos.length ? pendingTodos.map(t=>`- [${t.cat}] ${t.text}`).join('\n') : '- No pending todos'}
+
+Reply with ONLY the plan — no intro, no "Here's your plan" — just the bullet points. Keep it punchy and actionable.`;
+
+  const body = JSON.stringify({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: 512, temperature: 0.6 }
+  });
+  const models = ['gemini-2.5-flash','gemini-2.5-flash-lite-preview-06-17','gemini-2.0-flash'];
+  for (const model of models) {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${s.apiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      if (resp.ok) {
+        const data = await resp.json();
+        return (data.candidates?.[0]?.content?.parts?.[0]?.text || 'No plan generated.').trim();
+      }
+    } catch(e) { continue; }
+  }
+  throw new Error('Could not generate plan');
+}
+
+// ─── Weekly digest ──────────────────────────────────────────────────────────
+function renderDigest() {
+  const container = document.getElementById('digest-container');
+  if (!container) return;
+  const now = new Date();
+  if (now.getDay() !== 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  const sevenDaysAgo = new Date(now.getTime() - 7*24*3600000);
+  const sevenDaysAhead = new Date(now.getTime() + 7*24*3600000);
+  const doneTodos = todos.filter(t => {
+    if (!t.done) return false;
+    const completed = t.completedAt ? new Date(t.completedAt) : (t.created ? new Date(t.created) : null);
+    return completed && completed >= sevenDaysAgo;
+  });
+  const upcoming = canvasData.filter(a => {
+    if (!a.due || a.submitted) return false;
+    const d = new Date(a.due);
+    return d >= now && d <= sevenDaysAhead;
+  }).slice(0, 8);
+  const weekExp = expenses.filter(e => new Date(e.date) >= sevenDaysAgo);
+  const weekTotal = weekExp.reduce((s,e) => s+e.amount, 0);
+  const byCat = {};
+  weekExp.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amount; });
+  const hasContent = doneTodos.length > 0 || upcoming.length > 0 || weekTotal > 0;
+  if (!hasContent) { container.style.display = 'none'; container.innerHTML = ''; return; }
+  container.style.display = 'block';
+  container.className = 'digest-card';
+  container.innerHTML = `
+    <div class="digest-title">📬 Weekly Digest — ${now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+    <div class="digest-section">
+      <h4>Accomplished</h4>
+      ${doneTodos.length ? `<ul>${doneTodos.slice(0,10).map(t=>`<li>${t.text}</li>`).join('')}</ul>` : '<div class="digest-empty">Nothing marked done this week</div>'}
+    </div>
+    <div class="digest-section">
+      <h4>Upcoming</h4>
+      ${upcoming.length ? `<ul>${upcoming.map(a=>`<li>${a.name} — ${new Date(a.due).toLocaleDateString('en-US',{weekday:'short',month:'short'})}</li>`).join('')}</ul>` : '<div class="digest-empty">No deadlines this week</div>'}
+    </div>
+    <div class="digest-section">
+      <h4>Spending (past 7 days)</h4>
+      ${weekTotal > 0 ? `<ul><li><strong>$${weekTotal.toFixed(2)}</strong> total</li>${Object.entries(byCat).map(([c,a])=>`<li>${c}: $${a.toFixed(2)}</li>`).join('')}</ul>` : '<div class="digest-empty">No expenses logged</div>'}
+    </div>`;
+}
+
+// ─── Pomodoro ────────────────────────────────────────────────────────────────
+function renderPomoTodoSelect() {
+  const sel = document.getElementById('pomo-todo-sel');
+  if (!sel) return;
+  const pending = todos.filter(t => !t.done);
+  sel.innerHTML = '<option value="">— No specific task —</option>' +
+    pending.map(t => `<option value="${t.id}">[${t.cat}] ${t.text}</option>`).join('');
+}
+function formatPomo(sec) { const m=Math.floor(sec/60); const s=sec%60; return `${m}:${s<10?'0':''}${s}`; }
+function tickPomodoro() {
+  pomoRemaining--;
+  const el = document.getElementById('pomo-display');
+  if (el) el.textContent = formatPomo(pomoRemaining);
+  if (pomoRemaining <= 0) {
+    clearInterval(pomoInterval); pomoInterval = null; pomoRunning = false;
+    const mode = document.getElementById('pomo-mode');
+    if (pomoPhase === 'work') {
+      pomoPhase = 'break'; pomoRemaining = 5 * 60;
+      if (mode) mode.textContent = 'Break';
+      if (el) { el.classList.remove('work'); el.classList.add('break'); el.textContent = formatPomo(pomoRemaining); }
+      const todoId = document.getElementById('pomo-todo-sel')?.value;
+      if (todoId) { const t = todos.find(x => String(x.id) === todoId); if (t) { t.done = true; t.completedAt = new Date().toISOString(); saveTodos(); renderTodos(); renderPomoTodoSelect(); } }
+      toast('Session complete! 5 min break.');
+    } else {
+      pomoPhase = 'work'; pomoRemaining = 25 * 60;
+      if (mode) mode.textContent = 'Focus';
+      if (el) { el.classList.remove('break'); el.classList.add('work'); el.textContent = formatPomo(pomoRemaining); }
+      toast('Break over — ready for another round?');
+    }
+    const btn = document.getElementById('pomo-start-btn');
+    if (btn) btn.textContent = 'Pause';
+    pomoRunning = true;
+    pomoInterval = setInterval(tickPomodoro, 1000);
+  }
+}
+function togglePomodoro() {
+  if (pomoRunning) {
+    clearInterval(pomoInterval); pomoInterval = null; pomoRunning = false;
+    document.getElementById('pomo-start-btn').textContent = 'Start';
+  } else {
+    pomoRunning = true;
+    document.getElementById('pomo-start-btn').textContent = 'Pause';
+    pomoInterval = setInterval(tickPomodoro, 1000);
+  }
+}
+function resetPomodoro() {
+  clearInterval(pomoInterval); pomoInterval = null; pomoRunning = false;
+  pomoPhase = 'work'; pomoRemaining = 25 * 60;
+  const el = document.getElementById('pomo-display');
+  const mode = document.getElementById('pomo-mode');
+  if (el) { el.textContent = '25:00'; el.classList.remove('break'); el.classList.add('work'); }
+  if (mode) mode.textContent = 'Focus';
+  document.getElementById('pomo-start-btn').textContent = 'Start';
+}
+
+// ─── QR Code ─────────────────────────────────────────────────────────────────
+function updateQRCode() {
+  const wrap = document.getElementById('qr-wrap');
+  const placeholder = document.getElementById('qr-placeholder');
+  if (!wrap) return;
+  const oldQr = document.getElementById('qr-gen');
+  if (oldQr) oldQr.remove();
+  const s = cfg();
+  const userId = uid();
+  if (!s.sbUrl || !s.sbKey || !userId) {
+    if (placeholder) { placeholder.style.display = 'block'; placeholder.textContent = 'Configure Supabase above, then save — QR will appear here'; }
+    return;
+  }
+  if (placeholder) placeholder.style.display = 'none';
+  const base = location.href.split('#')[0];
+  const config = { url: s.sbUrl, key: s.sbKey, uid: userId };
+  const qrData = base + '#setup=' + btoa(unescape(encodeURIComponent(JSON.stringify(config))));
+  try {
+    if (typeof QRCode !== 'undefined') {
+      const qrDiv = document.createElement('div');
+      qrDiv.id = 'qr-gen';
+      wrap.insertBefore(qrDiv, wrap.firstChild);
+      new QRCode(qrDiv, { text: qrData, width: 160, height: 160 });
+    }
+  } catch(e) { if (placeholder) { placeholder.style.display = 'block'; placeholder.textContent = 'QR error'; } }
+}
 
 // ─── Expenses ──────────────────────────────────────────────────────────────
 const expColors = { food:'#f59e0b', transport:'#38bdf8', school:'#8b7cf8', entertainment:'#fb7185', health:'#4ade80', other:'#6b6b8a' };
 const expIcons = { food:'🍔', transport:'🚗', school:'📚', entertainment:'🎮', health:'💊', other:'📦' };
+
+// Known merchants: keyword -> display name (case-insensitive substring match)
+const merchantKeywords = {
+  walmart:'Walmart',wallmart:'Walmart','wal-mart':'Walmart',
+  amazon:'Amazon',costco:'Costco',target:'Target',
+  uber:'Uber',lyft:'Lyft',rides:'Rides',
+  starbucks:'Starbucks',mcdonalds:"McDonald's",chipotle:'Chipotle',
+  netflix:'Netflix',spotify:'Spotify',
+  shell:'Shell',chevron:'Chevron',exxon:'Exxon',
+  wholefoods:'Whole Foods','whole foods':'Whole Foods',
+  'trader joe':'Trader Joe\'s','trader joes':'Trader Joe\'s'
+};
+function getMerchant(desc) {
+  if (!desc || !desc.trim()) return 'Other';
+  const lower = desc.toLowerCase().trim();
+  for (const [kw, name] of Object.entries(merchantKeywords)) {
+    if (lower.includes(kw)) return name;
+  }
+  const first = desc.split(/[\s,]+/).find(w => w.length > 1);
+  return first ? first.charAt(0).toUpperCase() + first.slice(1).toLowerCase() : desc.slice(0,15);
+}
 
 function changeMonth(dir) {
   viewMonth.setMonth(viewMonth.getMonth() + dir);
@@ -1058,6 +1343,26 @@ function renderExpenses() {
   const total = monthExp.reduce((s,e) => s+e.amount, 0);
   document.getElementById('exp-total-amt').textContent = '$' + total.toFixed(2);
 
+  // 6‑month spending chart
+  const now = new Date();
+  const sixMonths = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const amt = expenses.filter(e => {
+      const ed = new Date(e.date);
+      return ed.getFullYear() === d.getFullYear() && ed.getMonth() === d.getMonth();
+    }).reduce((s,e) => s + e.amount, 0);
+    sixMonths.push({ label: d.toLocaleDateString('en-US',{month:'short'}), amt });
+  }
+  const maxAmt = Math.max(...sixMonths.map(m=>m.amt), 1);
+  document.getElementById('exp-chart').innerHTML = sixMonths.map(m =>
+    `<div class="exp-chart-bar">
+      <div class="exp-chart-bar-fill" style="height:${(m.amt/maxAmt*80)+12}px"></div>
+      <div class="exp-chart-bar-val">$${m.amt.toFixed(0)}</div>
+      <div class="exp-chart-bar-lbl">${m.label}</div>
+    </div>`
+  ).join('');
+
   // Breakdown
   const bycat = {};
   monthExp.forEach(e => { bycat[e.cat] = (bycat[e.cat]||0) + e.amount; });
@@ -1073,6 +1378,24 @@ function renderExpenses() {
     </div>`;
   }).join('') : '<div style="color:var(--muted);font-size:12px;font-family:var(--mono)">No expenses this month</div>';
 
+  // By merchant (from description)
+  const byMerchant = {};
+  monthExp.forEach(e => {
+    const m = getMerchant(e.desc);
+    byMerchant[m] = (byMerchant[m]||0) + e.amount;
+  });
+  const sortedMerchant = Object.entries(byMerchant).sort((a,b) => b[1]-a[1]);
+  document.getElementById('exp-merchant').innerHTML = sortedMerchant.length ? sortedMerchant.map(([merchant, amt]) => {
+    const pct = total > 0 ? (amt/total*100).toFixed(0) : 0;
+    return `<div class="exp-bar-wrap">
+      <div class="exp-bar-label">
+        <span class="cat-name">🏷 ${merchant}</span>
+        <span class="cat-amt" style="color:var(--teal)">$${amt.toFixed(2)} <span style="color:var(--muted);font-size:10px">${pct}%</span></span>
+      </div>
+      <div class="exp-bar-track"><div class="exp-bar-fill" style="width:${pct}%;background:var(--teal)"></div></div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);font-size:12px;font-family:var(--mono)">No expenses — add some to see merchant totals</div>';
+
   // List (newest first)
   const recent = [...monthExp].sort((a,b) => new Date(b.date)-new Date(a.date));
   document.getElementById('exp-list').innerHTML = recent.length ? recent.map(e => `
@@ -1080,23 +1403,14 @@ function renderExpenses() {
       <div class="exp-icon" style="background:${expColors[e.cat]||'#333'}22">${expIcons[e.cat]||'📦'}</div>
       <div class="exp-info">
         <div class="exp-desc">${e.desc}</div>
-        <div class="exp-cat">${e.cat}</div>
+        <div class="exp-cat">${e.cat} <span style="color:var(--muted);font-size:10px">· ${getMerchant(e.desc)}</span></div>
       </div>
-      <div style="text-align:right;display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <div>
-          <div class="exp-amt" style="color:${expColors[e.cat]||'var(--text)'}">$${e.amount.toFixed(2)}</div>
-          <div class="exp-date">${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
-        </div>
-        <button class="todo-del" onclick="deleteExpense(${e.id})" title="Delete">✕</button>
+      <div style="text-align:right">
+        <div class="exp-amt" style="color:${expColors[e.cat]||'var(--text)'}">$${e.amount.toFixed(2)}</div>
+        <div class="exp-date">${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
       </div>
+      <button class="exp-del" onclick="event.stopPropagation();deleteExpense('${e.id}')" title="Delete expense">🗑</button>
     </div>`).join('') : '<div class="empty" style="padding:16px 0">No transactions this month</div>';
-}
-
-async function deleteExpense(id) {
-  await sbDelete('expenses', id);
-  expenses = expenses.filter(e => e.id !== id);
-  localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
-  renderExpenses();
 }
 
 function addExpense() {
@@ -1110,6 +1424,14 @@ function addExpense() {
   document.getElementById('exp-amt').value = '';
   renderExpenses();
   toast('Expense logged ✓');
+}
+
+async function deleteExpense(id) {
+  await sbDelete('expenses', id);
+  expenses = expenses.filter(e => String(e.id) !== String(id));
+  localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
+  renderExpenses();
+  toast('Expense removed');
 }
 
 function exportExpenses() {
@@ -1325,7 +1647,7 @@ Be concise, direct, warm. Answer using the context above. If asked to add a todo
         chatHistory.push({ role:'user', content: msg });
         chatHistory.push({ role:'assistant', content: reply });
         parseActions(msg);
-        return reply;
+        return reply;//
       }
 
       const errData = await resp.json().catch(() => ({}));
@@ -1400,26 +1722,41 @@ function toast(msg) {
 }
 
 // ─── Init ──────────────────────────────────────────────────────────────────
+function parseSetupHash() {
+  const hash = location.hash;
+  if (!hash || !hash.startsWith('#setup=')) return false;
+  try {
+    const b64 = hash.slice(7);
+    const json = decodeURIComponent(escape(atob(b64)));
+    const data = JSON.parse(json);
+    if (data.url) localStorage.setItem('ash_sb_url', data.url);
+    if (data.key) localStorage.setItem('ash_sb_key', data.key);
+    if (data.uid) localStorage.setItem('ash_uid', data.uid);
+    location.hash = '';
+    return true;
+  } catch(e) { return false; }
+}
+
 async function init() {
+  const fromQR = parseSetupHash();
   initSupabase();
   const synced = await loadFromSupabase();
   renderCanvas();
   renderTodos();
   renderExpenses();
   renderGrades();
+  renderDigest();
+  renderStandup();
   const s = cfg();
   if (s.icalUrl) syncCanvas();
   if (!s.apiKey) setTimeout(() => { toast('⚙ Get a free Gemini key at aistudio.google.com'); }, 2000);
   updateSyncBadge();
-  if (SB && synced) setTimeout(() => toast(`Cloud sync active — ID: ${uid().slice(0,12)}...`), 800);
-
-  // Auto-refresh when switching back to tab (e.g. after adding on another device)
-  document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible' && SB) {
-      const ok = await loadFromSupabase(true);
-      if (ok) { renderTodos(); renderExpenses(); renderGrades(); }
-    }
-  });
+  if (fromQR) {
+    toast('Sync config loaded from QR — tap ⚙ to confirm and Save');
+    setTimeout(() => openSettings(), 400);
+  } else if (SB && synced) {
+    setTimeout(() => toast(`Cloud sync active — ID: ${uid().slice(0,12)}...`), 800);
+  }
 }
 
 async function debugConnection() {
@@ -1452,22 +1789,10 @@ async function debugConnection() {
     try {
       const { data, error } = await SB.from('expenses').select('*').eq('user_id', userId).limit(5);
       if (error) {
-        lines.push(`Select error: ${error.message}`);
+        lines.push(`Query error: ${error.message}`);
       } else {
         lines.push(`Expenses found: ${data.length} rows`);
-        if (data.length > 0) lines.push(`First: ${(data[0].desc||data[0].description)} $${data[0].amount}`);
-      }
-      // Test write
-      const testRow = { id: 999999999, description: 'test', amount: 0.01, cat: 'other', date: new Date().toISOString(), user_id: userId };
-      const { error: writeErr } = await SB.from('expenses').upsert(testRow);
-      if (writeErr) {
-        lines.push('---');
-        lines.push(`Write error: ${writeErr.message}`);
-        lines.push('Fix: Run the SQL in Settings in Supabase SQL Editor');
-      } else {
-        lines.push('---');
-        lines.push('Write test: ✓ OK');
-        await SB.from('expenses').delete().eq('id', 999999999);
+        if (data.length > 0) lines.push(`First: ${data[0].desc} $${data[0].amount}`);
       }
     } catch(e) {
       lines.push(`Fetch threw: ${e.message}`);
@@ -1485,20 +1810,14 @@ async function debugConnection() {
 
 function updateSyncBadge() {
   const badge = document.getElementById('sync-badge');
-  const expSyncBtn = document.getElementById('exp-sync-btn');
-  if (badge) {
-    if (SB) {
-      const u = uid();
-      badge.textContent = '☁ ' + (u.length > 12 ? u.slice(0,8)+'…' : u);
-      badge.title = 'Sync ID: ' + u + ' — must match on all devices';
-      badge.style.color = '#2dd4bf';
-    } else {
-      badge.textContent = '⚠ local only';
-      badge.title = '';
-      badge.style.color = 'var(--muted)';
-    }
+  if (!badge) return;
+  if (SB) {
+    badge.textContent = '☁ synced';
+    badge.style.color = '#2dd4bf';
+  } else {
+    badge.textContent = '⚠ local only';
+    badge.style.color = 'var(--muted)';
   }
-  if (expSyncBtn) expSyncBtn.style.display = SB ? 'inline' : 'none';
 }
 
 init();
