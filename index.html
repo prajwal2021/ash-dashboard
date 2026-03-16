@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080810">
+<title>Ash — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080810;--s1:#0f0f1a;--s2:#161625;--s3:#1e1e30;
+  --b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.11);--b3:rgba(255,255,255,0.18);
+  --text:#eeeef5;--muted:#6b6b8a;--muted2:#9898b8;
+  --purple:#8b7cf8;--purple-dim:rgba(139,124,248,0.15);--purple-glow:rgba(139,124,248,0.25);
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.12);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.12);
+  --rose:#fb7185;--rose-dim:rgba(251,113,133,0.12);
+  --sky:#38bdf8;--sky-dim:rgba(56,189,248,0.12);
+  --green:#4ade80;--green-dim:rgba(74,222,128,0.12);
+  --sans:'Bricolage Grotesque',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans)}
+
+/* Noise */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* Layout */
+.shell{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto}
+
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0;flex-shrink:0}
+.brand{font-size:22px;font-weight:700;letter-spacing:-0.04em;color:var(--text)}
+.brand span{color:var(--purple)}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.icon-btn{width:34px;height:34px;border-radius:9px;background:var(--s2);border:1px solid var(--b2);color:var(--muted2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.icon-btn:hover{border-color:var(--b3);color:var(--text)}
+.icon-btn.active-chat{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+
+/* Nav tabs */
+.nav{display:flex;gap:4px;padding:14px 18px 0;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-tab{flex-shrink:0;font-size:12px;font-weight:500;letter-spacing:0.01em;padding:7px 14px;border-radius:20px;border:1px solid var(--b1);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.nav-tab:hover{color:var(--muted2);border-color:var(--b2)}
+.nav-tab.active{background:var(--s2);border-color:var(--b3);color:var(--text)}
+.nav-tab .tab-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+/* Scroll area */
+.scroll{flex:1;overflow-y:auto;padding:16px 18px 100px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.scroll::-webkit-scrollbar{width:3px}
+.scroll::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+/* Pages */
+.page{display:none;animation:fadeUp .25s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Cards ── */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:16px;margin-bottom:12px;transition:border-color .2s}
+.card:hover{border-color:var(--b2)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.card-action{font-size:11px;color:var(--purple);cursor:pointer;font-family:var(--mono);background:none;border:none;padding:0}
+.card-action:hover{color:var(--text)}
+
+/* Stat row */
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.stat-box{background:var(--s2);border-radius:12px;padding:14px;border:1px solid var(--b1)}
+.stat-num{font-size:30px;font-weight:700;letter-spacing:-0.04em;line-height:1}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono)}
+.red{color:var(--rose)}.yellow{color:var(--amber)}.green{color:var(--green)}.purple{color:var(--purple)}.teal{color:var(--teal)}.sky{color:var(--sky)}
+
+/* Assignment item */
+.asgn{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--b1)}
+.asgn:last-child{border:none;padding-bottom:0}
+.asgn-urgency{width:3px;border-radius:3px;height:36px;flex-shrink:0}
+.asgn-info{flex:1;min-width:0}
+.asgn-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asgn-course{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.asgn-due{text-align:right;flex-shrink:0}
+.asgn-time{font-size:12px;font-weight:500;font-family:var(--mono)}
+.asgn-date{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* Calendar strip */
+.cal-strip{display:flex;gap:6px;margin-bottom:4px}
+.cal-day{flex:1;text-align:center;padding:8px 4px;border-radius:10px;border:1px solid var(--b1);background:var(--s2)}
+.cal-day.today{background:var(--purple-dim);border-color:var(--purple)}
+.cal-day.has-due{border-color:rgba(245,158,11,0.35)}
+.cal-dn{font-size:9px;color:var(--muted);text-transform:uppercase;font-family:var(--mono)}
+.cal-day.today .cal-dn{color:var(--purple)}
+.cal-num{font-size:15px;font-weight:700;margin-top:2px}
+.cal-pip{width:4px;height:4px;border-radius:50%;background:var(--amber);margin:4px auto 0}
+.cal-day.today .cal-pip{background:var(--purple)}
+
+/* ── Todos ── */
+.todo-cats{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.todo-cats::-webkit-scrollbar{display:none}
+.cat-tab{flex-shrink:0;font-size:11px;font-weight:500;padding:6px 14px;border-radius:20px;border:1px solid var(--b1);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.cat-tab.active{color:var(--text);border-color:var(--b3);background:var(--s2)}
+.cat-tab[data-cat="academic"].active{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+.cat-tab[data-cat="work"].active{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+.cat-tab[data-cat="personal"].active{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.cat-tab[data-cat="code"].active{border-color:var(--sky);color:var(--sky);background:var(--sky-dim)}
+
+.todo-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--b1);animation:fadeUp .2s ease}
+.todo-item:last-child{border:none}
+.todo-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--b3);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .2s}
+.todo-check:hover{border-color:var(--purple)}
+.todo-check.done{background:var(--purple);border-color:var(--purple);color:#fff;font-size:11px}
+.todo-text{flex:1;font-size:13px;line-height:1.5}
+.todo-text.done{text-decoration:line-through;color:var(--muted)}
+.todo-meta{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.todo-del{font-size:14px;color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:4px;background:none;border:none;transition:color .15s;flex-shrink:0}
+.todo-del:hover{color:var(--rose)}
+
+.add-todo-row{display:flex;gap:8px;margin-top:14px}
+.add-todo-input{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
+.add-todo-input:focus{border-color:var(--purple)}
+.add-todo-input::placeholder{color:var(--muted)}
+.add-btn{background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple);border-radius:10px;font-size:18px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.add-btn:hover{background:var(--purple);color:#fff}
+
+.cat-counts{display:flex;gap:6px;margin-bottom:16px}
+.cat-count-pill{flex:1;background:var(--s2);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid var(--b1)}
+.cat-count-pill .cnt{font-size:18px;font-weight:700;letter-spacing:-0.03em}
+.cat-count-pill .lbl{font-size:9px;color:var(--muted);margin-top:2px;font-family:var(--mono);text-transform:uppercase}
+
+/* ── Expenses ── */
+.exp-total{text-align:center;padding:20px 0 16px}
+.exp-total .amount{font-size:44px;font-weight:700;letter-spacing:-0.05em;color:var(--text)}
+.exp-total .period{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:4px}
+
+.exp-bar-wrap{margin-bottom:16px}
+.exp-bar-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px}
+.exp-bar-label .cat-name{color:var(--muted2);font-family:var(--mono)}
+.exp-bar-label .cat-amt{font-weight:500}
+.exp-bar-track{height:6px;background:var(--s2);border-radius:3px;overflow:hidden}
+.exp-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+
+.exp-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--b1)}
+.exp-item:last-child{border:none}
+.exp-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.exp-info{flex:1;min-width:0}
+.exp-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-cat{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.exp-amt{font-size:14px;font-weight:600;font-family:var(--mono);flex-shrink:0}
+.exp-date{font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+
+.add-exp-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.add-exp-input{flex:1;min-width:120px;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:13px;padding:10px 14px;outline:none;transition:border-color .2s}
+.add-exp-input:focus{border-color:var(--teal)}
+.add-exp-input::placeholder{color:var(--muted)}
+.exp-cat-sel{background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;cursor:pointer}
+.exp-add-btn{background:var(--teal-dim);border:1px solid var(--teal);color:var(--teal);border-radius:10px;font-size:18px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.exp-add-btn:hover{background:var(--teal);color:#000}
+.exp-amt-input{width:90px;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;outline:none}
+.exp-month-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:4px}
+.month-nav-btn{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;transition:color .2s}
+.month-nav-btn:hover{color:var(--text)}
+.month-label{font-size:13px;font-weight:600;letter-spacing:-0.01em;min-width:120px;text-align:center}
+
+/* ── Grades ── */
+.grade-course-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:16px;margin-bottom:12px}
+.grade-course-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.grade-course-name{font-size:14px;font-weight:600;letter-spacing:-0.01em}
+.grade-badge{font-size:12px;font-weight:700;font-family:var(--mono);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.grade-A{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,0.3)}
+.grade-B{background:var(--sky-dim);color:var(--sky);border:1px solid rgba(56,189,248,0.3)}
+.grade-C{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,0.3)}
+.grade-D,.grade-F{background:var(--rose-dim);color:var(--rose);border:1px solid rgba(251,113,133,0.3)}
+.grade-pct-bar{height:5px;background:var(--s3);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.grade-pct-fill{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.34,1.56,.64,1)}
+.grade-item{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--b1)}
+.grade-item:last-child{border:none}
+.grade-item-name{color:var(--muted2)}
+.grade-item-score{font-family:var(--mono);font-weight:500}
+.grade-projection{background:var(--s2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--muted2);line-height:1.5}
+.grade-projection strong{color:var(--amber);font-weight:600}
+.add-grade-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.add-grade-input{flex:1;min-width:100px;background:var(--s3);border:1px solid var(--b2);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:12px;padding:8px 12px;outline:none}
+.add-grade-input::placeholder{color:var(--muted)}
+.add-grade-btn{background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple);border-radius:8px;font-size:13px;padding:8px 14px;cursor:pointer;font-family:var(--mono);transition:all .2s;white-space:nowrap}
+.add-grade-btn:hover{background:var(--purple);color:#fff}
+.add-course-btn{width:100%;background:var(--s2);border:1px dashed var(--b2);border-radius:14px;padding:14px;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;font-family:var(--sans);margin-top:4px}
+.add-course-btn:hover{border-color:var(--purple);color:var(--purple)}
+
+/* ── Chat overlay ── */
+.chat-overlay{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--s1);border-top:1px solid var(--b2);border-radius:24px 24px 0 0;display:none;flex-direction:column;height:75%;max-width:520px;margin:0 auto;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1)}
+.chat-overlay.open{display:flex}
+.chat-drag{width:36px;height:4px;background:var(--b3);border-radius:2px;margin:12px auto 8px;cursor:grab}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.chat-msgs::-webkit-scrollbar{width:3px}
+.msg-row{display:flex;flex-direction:column;max-width:82%}
+.msg-row.user{align-self:flex-end;align-items:flex-end}
+.msg-row.assistant{align-self:flex-start}
+.bubble{padding:11px 15px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word}
+.msg-row.user .bubble{background:var(--purple);color:#fff;border-bottom-right-radius:4px}
+.msg-row.assistant .bubble{background:var(--s2);border:1px solid var(--b2);border-bottom-left-radius:4px;color:var(--text)}
+.typing-bubble{display:flex;align-items:center;gap:4px;padding:14px 16px}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:tb 1.2s ease infinite}
+.tdot:nth-child(2){animation-delay:.2s}
+.tdot:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.chat-input-row{display:flex;align-items:flex-end;gap:8px;padding:12px 16px 28px;border-top:1px solid var(--b1)}
+.chat-textarea{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:14px;color:var(--text);font-family:var(--sans);font-size:14px;padding:10px 14px;outline:none;resize:none;max-height:100px;transition:border-color .2s;line-height:1.5}
+.chat-textarea:focus{border-color:var(--purple)}
+.chat-textarea::placeholder{color:var(--muted)}
+.chat-send{width:38px;height:38px;border-radius:50%;background:var(--purple);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.chat-send:hover{background:#7c6cf0}
+.chat-mic{width:38px;height:38px;border-radius:50%;background:var(--s2);border:1px solid var(--b2);color:var(--muted2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.chat-mic:hover{color:var(--text)}
+.chat-mic.rec{background:var(--rose-dim);border-color:var(--rose);color:var(--rose);animation:pulse 1s ease infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(251,113,133,.3)}50%{box-shadow:0 0 0 8px rgba(251,113,133,0)}}
+
+/* Bottom nav */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;display:flex;background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);border-top:1px solid var(--b1);padding:8px 0 20px;z-index:10}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 4px;color:var(--muted);transition:color .2s}
+.bnav-btn.active{color:var(--purple)}
+.bnav-icon{font-size:20px}
+.bnav-label{font-size:9px;font-family:var(--mono);letter-spacing:0.05em;text-transform:uppercase}
+
+/* Settings */
+.settings-sheet{position:fixed;inset:0;z-index:30;background:var(--bg);display:none;flex-direction:column;animation:slideUp .3s ease;max-width:520px;margin:0 auto;overflow-y:auto}
+.settings-sheet.open{display:flex}
+.sheet-header{padding:22px 18px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1);flex-shrink:0}
+.sheet-title{font-size:20px;font-weight:700;letter-spacing:-0.03em}
+.sheet-close{background:var(--s2);border:1px solid var(--b2);color:var(--muted2);width:40px;height:40px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.sheet-body{flex:1;overflow-y:auto;padding:20px 18px 40px;display:flex;flex-direction:column;gap:18px}
+.sfield label{display:block;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;font-family:var(--mono)}
+.sfield input,.sfield textarea{width:100%;background:var(--s1);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:none;transition:border-color .2s}
+.sfield input:focus,.sfield textarea:focus{border-color:var(--purple)}
+.sfield input::placeholder,.sfield textarea::placeholder{color:var(--muted)}
+.sfield .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+.save-settings-btn{background:var(--purple);border:none;color:#fff;border-radius:12px;font-size:15px;font-weight:600;padding:14px;cursor:pointer;transition:opacity .2s;font-family:var(--sans)}
+.save-settings-btn:hover{opacity:.85}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* Empty states */
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;line-height:1.7}
+
+/* Month badge */
+.month-badge{display:inline-block;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:4px 12px;font-size:11px;font-family:var(--mono);color:var(--muted2);margin-bottom:12px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">ash<span>.</span></div>
+    <div class="topbar-right">
+      <span id="sync-badge" style="font-size:10px;font-family:var(--mono);color:var(--muted);letter-spacing:0.05em">⚠ local only</span>
+      <button class="icon-btn" id="chat-toggle-btn" onclick="toggleChat()" title="Ask Ash">💬</button>
+      <button class="icon-btn" onclick="openSettings()">⚙</button>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav">
+    <button class="nav-tab active" data-page="canvas" onclick="switchPage('canvas',this)">
+      <span class="tab-dot" style="background:var(--rose)"></span>Canvas
+    </button>
+    <button class="nav-tab" data-page="todos" onclick="switchPage('todos',this)">
+      <span class="tab-dot" style="background:var(--purple)"></span>Todos
+    </button>
+    <button class="nav-tab" data-page="expenses" onclick="switchPage('expenses',this)">
+      <span class="tab-dot" style="background:var(--teal)"></span>Expenses
+    </button>
+    <button class="nav-tab" data-page="grades" onclick="switchPage('grades',this)">
+      <span class="tab-dot" style="background:var(--sky)"></span>Grades
+    </button>
+  </div>
+
+  <!-- Scrollable content -->
+  <div class="scroll" id="scroll">
+
+    <!-- ══ CANVAS PAGE ══ -->
+    <div class="page active" id="page-canvas">
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num red" id="c-overdue">0</div><div class="stat-lbl">overdue</div></div>
+        <div class="stat-box"><div class="stat-num yellow" id="c-urgent">0</div><div class="stat-lbl">due in 48h</div></div>
+        <div class="stat-box"><div class="stat-num purple" id="c-week">0</div><div class="stat-lbl">this week</div></div>
+        <div class="stat-box"><div class="stat-num green" id="c-done">0</div><div class="stat-lbl">submitted</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Next 7 Days</div>
+        </div>
+        <div class="cal-strip" id="cal-strip"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Assignments</div>
+          <button class="card-action" onclick="syncCanvas()">↺ sync</button>
+        </div>
+        <div id="asgn-list"><div class="empty">Connect Canvas in ⚙ settings to load your assignments</div></div>
+      </div>
+    </div>
+
+    <!-- ══ TODOS PAGE ══ -->
+    <div class="page" id="page-todos">
+      <div class="cat-counts" id="cat-counts">
+        <div class="cat-count-pill"><div class="cnt purple" id="cnt-academic">0</div><div class="lbl">Academic</div></div>
+        <div class="cat-count-pill"><div class="cnt teal" id="cnt-work">0</div><div class="lbl">Work</div></div>
+        <div class="cat-count-pill"><div class="cnt yellow" id="cnt-personal">0</div><div class="lbl">Personal</div></div>
+        <div class="cat-count-pill"><div class="cnt sky" id="cnt-code">0</div><div class="lbl">Code</div></div>
+      </div>
+
+      <div class="todo-cats">
+        <button class="cat-tab active" data-cat="academic" onclick="switchCat('academic',this)">🎓 Academic</button>
+        <button class="cat-tab" data-cat="work" onclick="switchCat('work',this)">💼 Work</button>
+        <button class="cat-tab" data-cat="personal" onclick="switchCat('personal',this)">🌿 Personal</button>
+        <button class="cat-tab" data-cat="code" onclick="switchCat('code',this)">💻 Code</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="todo-cat-label">Academic</div>
+          <button class="card-action" onclick="clearDoneTodos()">clear done</button>
+        </div>
+        <div id="todo-list"></div>
+        <div class="add-todo-row">
+          <input class="add-todo-input" id="todo-input" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTodo()"/>
+          <button class="add-btn" onclick="addTodo()">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EXPENSES PAGE ══ -->
+    <div class="page" id="page-expenses">
+      <div class="exp-month-nav">
+        <button class="month-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="month-label"></div>
+        <button class="month-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+
+      <div class="exp-total">
+        <div class="amount" id="exp-total-amt">$0.00</div>
+        <div class="period" id="exp-period">this month</div>
+      </div>
+
+      <div class="card" id="exp-breakdown-card">
+        <div class="card-header"><div class="card-title">By Category</div></div>
+        <div id="exp-breakdown"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Transactions</div>
+          <button class="card-action" onclick="exportExpenses()">export</button>
+        </div>
+        <div id="exp-list"></div>
+        <div class="add-exp-row">
+          <input class="add-exp-input" id="exp-desc" placeholder="Description..." />
+          <input class="add-exp-input exp-amt-input" id="exp-amt" type="number" placeholder="$0.00" />
+          <select class="exp-cat-sel" id="exp-cat-sel">
+            <option value="food">🍔 Food</option>
+            <option value="transport">🚗 Transport</option>
+            <option value="school">📚 School</option>
+            <option value="entertainment">🎮 Fun</option>
+            <option value="health">💊 Health</option>
+            <option value="other">📦 Other</option>
+          </select>
+          <button class="exp-add-btn" onclick="addExpense()">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GRADES PAGE ══ -->
+    <div class="page" id="page-grades">
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num purple" id="g-gpa">—</div><div class="stat-lbl">current GPA</div></div>
+        <div class="stat-box"><div class="stat-num teal" id="g-courses">0</div><div class="stat-lbl">courses</div></div>
+      </div>
+      <div id="grades-list"></div>
+      <button class="add-course-btn" onclick="addCourse()">+ Add course</button>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="bnav-btn active" data-page="canvas" onclick="switchPage('canvas',this); syncBottomNav(this)">
+      <span class="bnav-icon">📋</span><span class="bnav-label">Canvas</span>
+    </button>
+    <button class="bnav-btn" data-page="todos" onclick="switchPage('todos',this); syncBottomNav(this)">
+      <span class="bnav-icon">✅</span><span class="bnav-label">Todos</span>
+    </button>
+    <button class="bnav-btn" data-page="expenses" onclick="switchPage('expenses',this); syncBottomNav(this)">
+      <span class="bnav-icon">💰</span><span class="bnav-label">Expenses</span>
+    </button>
+    <button class="bnav-btn" data-page="grades" onclick="switchPage('grades',this); syncBottomNav(this)">
+      <span class="bnav-icon">🎓</span><span class="bnav-label">Grades</span>
+    </button>
+  </div>
+
+  <!-- Chat overlay -->
+  <div class="chat-overlay" id="chat-overlay">
+    <div class="chat-drag" onclick="toggleChat()"></div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="msg-row assistant"><div class="bubble">Hi! I'm Ash. Ask me about your deadlines, todos, expenses, grades — or anything else. 🎯</div></div>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-textarea" id="chat-input" rows="1" placeholder="Ask anything..." onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="chat-mic" id="chat-mic" onclick="toggleVoice()">🎙</button>
+      <button class="chat-send" onclick="sendChat()">↑</button>
+    </div>
+  </div>
+
+  <!-- Settings sheet -->
+  <div class="settings-sheet" id="settings-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">Settings</div>
+      <button class="sheet-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div style="background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.25);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:11px;color:#2dd4bf;font-family:var(--mono);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">cloud sync</div>
+        <div style="font-size:11px;color:var(--muted2);line-height:1.6">Set these once and your todos, expenses and grades sync across every device in real time.</div>
+      </div>
+      <div class="sfield">
+        <label>Supabase Project URL</label>
+        <input type="url" id="s-sb-url" placeholder="https://xxxx.supabase.co" />
+      </div>
+      <div class="sfield">
+        <label>Supabase Anon Key</label>
+        <input type="password" id="s-sb-key" placeholder="eyJ..." />
+        <div class="hint">Supabase → Project Settings → API → anon public key</div>
+      </div>
+      <div class="sfield">
+        <label>Your User ID</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="s-uid" placeholder="auto-generated" style="flex:1;font-family:var(--mono);font-size:11px" />
+          <button onclick="copyUid()" style="background:var(--s3);border:1px solid var(--b2);color:var(--muted2);border-radius:8px;padding:8px 12px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:var(--mono)">copy</button>
+        </div>
+        <div class="hint">Auto-generated and saved permanently on this device. To sync a second device — copy this ID from your first device and paste it into the second device's settings.</div>
+      </div>
+      <div style="height:1px;background:var(--b1);margin:8px 0 16px"></div>
+      <div class="sfield">
+        <label>Gemini API Key (free)</label>
+        <input type="password" id="s-apikey" placeholder="AIza..." />
+        <div class="hint">aistudio.google.com → Get API key → Create API key. Free, no card needed.</div>
+      </div>
+      <div class="sfield">
+        <label>Your Name</label>
+        <input type="text" id="s-name" placeholder="e.g. Prajwal" />
+      </div>
+      <div class="sfield">
+        <label>Your City</label>
+        <input type="text" id="s-city" placeholder="e.g. Lubbock, Texas" />
+      </div>
+      <div class="sfield">
+        <label>Canvas iCal Feed URL</label>
+        <input type="url" id="s-ical-url" placeholder="https://canvas.university.edu/feeds/calendars/user_xxx.ics" />
+        <div class="hint">Canvas → Calendar → bottom-right → Calendar Feed → copy .ics URL</div>
+      </div>
+      <div class="sfield">
+        <label>About You</label>
+        <textarea id="s-context" rows="4" placeholder="CS Masters student, grad assistant. Courses: ML Systems, Distributed Computing, NLP, Algorithms..."></textarea>
+        <div class="hint">Ash uses this to personalize every answer.</div>
+      </div>
+      <button class="save-settings-btn" onclick="saveSettings()">Save & Connect</button>
+      <button onclick="debugConnection()" style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--b2);color:var(--muted2);border-radius:12px;font-size:13px;padding:12px;cursor:pointer;font-family:var(--mono)">🔍 test connection</button>
+      <div id="debug-out" style="margin-top:12px;font-family:var(--mono);font-size:11px;line-height:1.8;color:var(--muted2);background:var(--s3);border-radius:8px;padding:12px;display:none"></div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+// ─── Data store ────────────────────────────────────────────────────────────
+let todos = JSON.parse(localStorage.getItem('ash_todos2') || '[]');
+let expenses = JSON.parse(localStorage.getItem('ash_expenses2') || '[]');
+let grades = JSON.parse(localStorage.getItem('ash_grades2') || '[]');
+let canvasData = [];
+let activeTodoCat = 'academic';
+let viewMonth = new Date(); viewMonth.setDate(1);
+let chatHistory = [];
+let isRecording = false; let recognition = null;
+
+// ─── Supabase ──────────────────────────────────────────────────────────────
+let SB = null;
+
+function initSupabase() {
+  const url = localStorage.getItem('ash_sb_url');
+  const key = localStorage.getItem('ash_sb_key');
+  if (!url || !key || typeof supabase === 'undefined') { SB = null; return; }
+  try { SB = supabase.createClient(url, key); } catch(e) { SB = null; }
+}
+
+// User ID — auto-generated on first run, or manually set to match another device
+function uid() {
+  let id = localStorage.getItem('ash_uid');
+  if (!id || id === 'default') {
+    id = 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('ash_uid', id);
+  }
+  return id;
+}
+
+async function sbGet(table) {
+  if (!SB) return null;
+  try {
+    const { data, error } = await SB.from(table).select('*').eq('user_id', uid());
+    if (error) return null;
+    return data;
+  } catch(e) { return null; }
+}
+
+async function sbUpsert(table, row) {
+  if (!SB) return;
+  try { await SB.from(table).upsert({ ...row, user_id: uid() }); } catch(e) {}
+}
+
+async function sbDelete(table, id) {
+  if (!SB) return;
+  try { await SB.from(table).delete().eq('id', id).eq('user_id', uid()); } catch(e) {}
+}
+
+async function loadFromSupabase() {
+  if (!SB) return false;
+  toast('Loading from cloud...');
+  try {
+    const [td, ex, gr] = await Promise.all([
+      sbGet('todos'), sbGet('expenses'), sbGet('grades')
+    ]);
+    if (td) { todos = td; localStorage.setItem('ash_todos2', JSON.stringify(todos)); }
+    if (ex) { expenses = ex; localStorage.setItem('ash_expenses2', JSON.stringify(expenses)); }
+    if (gr) { grades = gr.map(g => ({ ...g, items: g.items || [] })); localStorage.setItem('ash_grades2', JSON.stringify(grades)); }
+    return true;
+  } catch(e) { return false; }
+}
+
+// Migrate existing localStorage data up to Supabase on first connect
+async function migrateLocalToSupabase() {
+  if (!SB) return;
+  // Check if Supabase already has data — if so, don't overwrite
+  const existing = await sbGet('expenses');
+  const hasCloudData = existing && existing.length > 0;
+  if (hasCloudData) {
+    // Cloud already has data — pull it down instead of overwriting
+    toast('Cloud has existing data — loading it...');
+    return;
+  }
+
+  // Cloud is empty — push everything local up
+  const localTodos    = JSON.parse(localStorage.getItem('ash_todos2')    || '[]');
+  const localExpenses = JSON.parse(localStorage.getItem('ash_expenses2') || '[]');
+  const localGrades   = JSON.parse(localStorage.getItem('ash_grades2')   || '[]');
+
+  const total = localTodos.length + localExpenses.length + localGrades.length;
+  if (total === 0) return;
+
+  toast(`Migrating ${total} items to cloud...`);
+
+  try {
+    await Promise.all([
+      ...localTodos.map(t => sbUpsert('todos', t)),
+      ...localExpenses.map(e => sbUpsert('expenses', e)),
+      ...localGrades.map(g => sbUpsert('grades', g))
+    ]);
+    // Mark migration done so we never run it again on this device
+    localStorage.setItem('ash_migrated', '1');
+    toast(`✓ Migrated ${total} items to cloud`);
+  } catch(e) {
+    toast('Migration partial — some items may not have synced');
+  }
+}
+
+async function saveTodos() {
+  localStorage.setItem('ash_todos2', JSON.stringify(todos));
+  // Sync all todos to Supabase (upsert each)
+  if (SB) for (const t of todos) await sbUpsert('todos', t);
+}
+
+async function saveExpenses() {
+  localStorage.setItem('ash_expenses2', JSON.stringify(expenses));
+  if (SB) for (const e of expenses) await sbUpsert('expenses', e);
+}
+
+async function saveGrades() {
+  localStorage.setItem('ash_grades2', JSON.stringify(grades));
+  if (SB) for (const g of grades) await sbUpsert('grades', g);
+}
+
+// ─── Settings ──────────────────────────────────────────────────────────────
+const cfg = () => ({
+  apiKey:  localStorage.getItem('ash_api') || '',
+  name:    localStorage.getItem('ash_name') || 'there',
+  city:    localStorage.getItem('ash_city') || 'Lubbock, Texas',
+  icalUrl: localStorage.getItem('ash_ical') || '',
+  context: localStorage.getItem('ash_ctx') || '',
+  sbUrl:   localStorage.getItem('ash_sb_url') || '',
+  sbKey:   localStorage.getItem('ash_sb_key') || '',
+  userId:  localStorage.getItem('ash_uid') || ''
+});
+
+function openSettings() {
+  const s = cfg();
+  document.getElementById('s-sb-url').value = s.sbUrl;
+  const sbKeyInput = document.getElementById('s-sb-key');
+  sbKeyInput.value = '';
+  sbKeyInput.placeholder = s.sbKey ? '●●●● already saved — paste new to update' : 'eyJ...';
+  // Show the actual uid so user can copy it to other devices
+  document.getElementById('s-uid').value = uid();
+  const apikeyInput = document.getElementById('s-apikey');
+  apikeyInput.value = '';
+  apikeyInput.placeholder = s.apiKey ? '●●●● already saved — paste new to update' : 'AIza...';
+  document.getElementById('s-name').value = s.name !== 'there' ? s.name : '';
+  document.getElementById('s-city').value = s.city;
+  document.getElementById('s-ical-url').value = s.icalUrl;
+  document.getElementById('s-context').value = s.context;
+  document.getElementById('settings-sheet').classList.add('open');
+}
+
+function copyUid() {
+  const id = uid();
+  navigator.clipboard.writeText(id).then(() => {
+    toast('User ID copied — paste it into your other device\'s settings');
+  }).catch(() => {
+    // Fallback: select the text
+    const el = document.getElementById('s-uid');
+    el.select();
+    document.execCommand('copy');
+    toast('User ID copied ✓');
+  });
+}
+function closeSettings() {
+  document.getElementById('settings-sheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSettings(); toggleChat(true); } });
+
+function toggleChat(forceClose) {
+  const overlay = document.getElementById('chat-overlay');
+  const btn = document.getElementById('chat-toggle-btn');
+  if (forceClose) {
+    overlay.classList.remove('open');
+    btn.classList.remove('active-chat');
+    return;
+  }
+  const open = overlay.classList.contains('open');
+  overlay.classList.toggle('open');
+  btn.classList.toggle('active-chat', !open);
+}
+
+async function saveSettings() {
+  const sbUrl  = document.getElementById('s-sb-url').value.trim().replace(/\/$/,'');
+  const sbKey  = document.getElementById('s-sb-key').value.trim();
+  const uid_v  = document.getElementById('s-uid').value.trim();
+  const k      = document.getElementById('s-apikey').value.trim();
+  const n      = document.getElementById('s-name').value.trim();
+  const c      = document.getElementById('s-city').value.trim();
+  const ical   = document.getElementById('s-ical-url').value.trim();
+  const x      = document.getElementById('s-context').value.trim();
+
+  const oldUid = localStorage.getItem('ash_uid') || '';
+
+  // Always save uid if field has a value (user may have pasted a different device's ID)
+  if (uid_v) localStorage.setItem('ash_uid', uid_v);
+  if (sbUrl) localStorage.setItem('ash_sb_url', sbUrl);
+  if (sbKey) localStorage.setItem('ash_sb_key', sbKey);
+  if (k)     localStorage.setItem('ash_api', k);
+  if (n)     localStorage.setItem('ash_name', n);
+  if (c)     localStorage.setItem('ash_city', c);
+  if (ical)  localStorage.setItem('ash_ical', ical);
+  if (x)     localStorage.setItem('ash_ctx', x);
+
+  closeSettings();
+  toast('Settings saved ✓');
+  initSupabase();
+
+  const uidChanged = uid_v && uid_v !== oldUid;
+
+  // First time connecting — migrate local data up, then load cloud
+  const alreadyMigrated = localStorage.getItem('ash_migrated');
+  if (SB && (!alreadyMigrated || uidChanged)) {
+    await migrateLocalToSupabase();
+  }
+  const synced = await loadFromSupabase();
+  if (synced) {
+    renderTodos(); renderExpenses(); renderGrades();
+    toast('Cloud sync active ✓');
+  }
+  if (ical) syncCanvas();
+}
+
+// ─── Navigation ────────────────────────────────────────────────────────────
+function switchPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll(`.nav-tab[data-page="${name}"]`).forEach(t => t.classList.add('active'));
+  document.getElementById('scroll').scrollTop = 0;
+  if (name === 'expenses') renderExpenses();
+  if (name === 'todos') renderTodos();
+  if (name === 'grades') renderGrades();
+}
+function syncBottomNav(el) {
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ─── Canvas iCal ───────────────────────────────────────────────────────────
+async function syncCanvas() {
+  const s = cfg();
+  if (!s.icalUrl) { toast('Paste your Canvas iCal URL in ⚙ settings'); return; }
+
+  // If user pasted raw .ics text instead of a URL, parse directly
+  if (s.icalUrl.includes('BEGIN:VCALENDAR')) {
+    canvasData = parseICS(s.icalUrl);
+    renderCanvas();
+    toast(`Loaded ${canvasData.length} assignments ✓`);
+    return;
+  }
+
+  toast('Syncing from iCal...');
+
+  // Try multiple CORS proxies in order until one works
+  const proxies = [
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  ];
+
+  let icsText = null;
+  for (const makeProxy of proxies) {
+    try {
+      const proxyUrl = makeProxy(s.icalUrl);
+      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) continue;
+      const raw = await resp.text();
+      // allorigins wraps in JSON
+      if (raw.trim().startsWith('{')) {
+        const json = JSON.parse(raw);
+        icsText = json.contents || json.data || raw;
+      } else {
+        icsText = raw;
+      }
+      if (icsText && icsText.includes('BEGIN:VCALENDAR')) break;
+      icsText = null; // not valid ICS, try next proxy
+    } catch(e) {
+      continue; // try next proxy
+    }
+  }
+
+  if (!icsText) {
+    // All proxies failed — show manual paste option
+    showManualPaste();
+    return;
+  }
+
+  canvasData = parseICS(icsText);
+  renderCanvas();
+  toast(`Loaded ${canvasData.length} assignments ✓`);
+}
+
+function showManualPaste() {
+  const existing = document.getElementById('manual-paste-card');
+  if (existing) { existing.scrollIntoView({behavior:'smooth'}); return; }
+
+  const card = document.createElement('div');
+  card.id = 'manual-paste-card';
+  card.className = 'card';
+  card.style.borderColor = 'rgba(245,158,11,0.4)';
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-title" style="color:var(--amber)">⚠ Auto-sync blocked by browser</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:14px">
+      Your browser is blocking the iCal fetch (CORS). Quick fix:<br><br>
+      1. Open your Canvas iCal URL directly in Safari<br>
+      2. You'll see raw text starting with <code style="color:var(--purple);font-family:var(--mono)">BEGIN:VCALENDAR</code><br>
+      3. Select all → copy → paste below
+    </div>
+    <textarea id="ics-paste" style="width:100%;height:100px;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:11px;padding:10px;outline:none;resize:vertical" placeholder="Paste BEGIN:VCALENDAR ... text here"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="loadFromPaste()" style="flex:1;background:var(--amber-dim);border:1px solid var(--amber);color:var(--amber);border-radius:10px;padding:10px;font-family:var(--sans);font-size:13px;cursor:pointer">Load from paste</button>
+      <button onclick="document.getElementById('manual-paste-card').remove()" style="background:none;border:1px solid var(--b2);color:var(--muted);border-radius:10px;padding:10px 16px;font-family:var(--sans);font-size:13px;cursor:pointer">dismiss</button>
+    </div>`;
+  const asgnList = document.getElementById('asgn-list');
+  asgnList.parentElement.insertBefore(card, asgnList.parentElement);
+  card.scrollIntoView({ behavior: 'smooth' });
+}
+
+function loadFromPaste() {
+  const text = document.getElementById('ics-paste')?.value?.trim();
+  if (!text || !text.includes('BEGIN:VCALENDAR')) { toast('Paste the full iCal text starting with BEGIN:VCALENDAR'); return; }
+  canvasData = parseICS(text);
+  renderCanvas();
+  document.getElementById('manual-paste-card')?.remove();
+  // Also save as the ical url field for next time
+  localStorage.setItem('ash_ical', text);
+  toast(`Loaded ${canvasData.length} assignments ✓`);
+}
+
+function parseICS(icsText) {
+  const events = [];
+  const blocks = icsText.split('BEGIN:VEVENT');
+  blocks.shift(); // remove header
+  for (const block of blocks) {
+    const get = (key) => {
+      const match = block.match(new RegExp(key + '[^:]*:([^\\r\\n]+)'));
+      return match ? match[1].trim() : '';
+    };
+    const summary = get('SUMMARY') || 'Untitled';
+    const dtstart = get('DTSTART');
+    const dtend   = get('DTEND');
+    const url     = get('URL');
+    const desc    = get('DESCRIPTION');
+    const location = get('LOCATION');
+
+    // Parse date — handle TZID and basic formats
+    const parseDate = (raw) => {
+      if (!raw) return null;
+      // Strip TZID prefix if present in key (already stripped by regex)
+      // Format: 20241115T235900Z or 20241115T235900 or 20241115
+      const clean = raw.replace(/[^0-9TZ]/g, '');
+      if (clean.length === 8) {
+        return new Date(clean.slice(0,4)+'-'+clean.slice(4,6)+'-'+clean.slice(6,8));
+      }
+      const y=clean.slice(0,4),mo=clean.slice(4,6),d=clean.slice(6,8);
+      const h=clean.slice(9,11)||'00',mi=clean.slice(11,13)||'00',se=clean.slice(13,15)||'00';
+      const isUTC = clean.endsWith('Z');
+      return isUTC
+        ? new Date(`${y}-${mo}-${d}T${h}:${mi}:${se}Z`)
+        : new Date(`${y}-${mo}-${d}T${h}:${mi}:${se}`);
+    };
+
+    const due = parseDate(dtstart);
+    if (!due) continue;
+
+    // Extract course name — Canvas puts it in LOCATION or at end of SUMMARY
+    let course = location || '';
+    let name = summary;
+    // Canvas format: "Assignment Name [Course Name]"
+    const bracketMatch = summary.match(/^(.+?)\s*\[(.+?)\]$/);
+    if (bracketMatch) { name = bracketMatch[1].trim(); course = bracketMatch[2].trim(); }
+
+    // Skip non-assignment events (office hours, etc.) — Canvas assignments have URLs
+    events.push({ name, due: due.toISOString(), course: course || 'Canvas', url, submitted: false });
+  }
+
+  // Sort by due date, filter to past 2 weeks + future 3 months
+  const now = new Date();
+  const twoWeeksAgo = new Date(now - 14*24*3600000);
+  const threeMonths  = new Date(now.getTime() + 90*24*3600000);
+  return events
+    .filter(e => new Date(e.due) >= twoWeeksAgo && new Date(e.due) <= threeMonths)
+    .sort((a,b) => new Date(a.due) - new Date(b.due));
+}
+
+function classifyDue(due, submitted) {
+  if (submitted) return 'submitted';
+  if (!due) return 'later';
+  const h = (new Date(due) - new Date()) / 3600000;
+  if (h < 0) return 'overdue';
+  if (h < 48) return 'urgent';
+  if (h < 168) return 'soon';
+  return 'later';
+}
+function dueLabel(due, cls) {
+  if (!due) return '—';
+  const h = Math.abs((new Date(due) - new Date()) / 3600000);
+  if (cls === 'overdue') return h < 24 ? `${Math.round(h)}h late` : `${Math.round(h/24)}d late`;
+  if (h < 1) return '< 1h';
+  if (h < 24) return `${Math.round(h)}h`;
+  if (h < 168) return `${Math.round(h/24)}d`;
+  return new Date(due).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+const urgencyColor = { overdue: 'var(--rose)', urgent: 'var(--amber)', soon: 'var(--purple)', later: 'var(--muted)', submitted: 'var(--green)' };
+const urgencyTextClass = { overdue: 'red', urgent: 'yellow', soon: 'purple', later: '', submitted: 'green' };
+
+function renderCanvas() {
+  const sorted = [...canvasData].sort((a, b) => {
+    const order = { overdue:0, urgent:1, soon:2, later:3, submitted:4 };
+    const ca = classifyDue(a.due, a.submitted), cb = classifyDue(b.due, b.submitted);
+    if (order[ca] !== order[cb]) return order[ca] - order[cb];
+    return a.due && b.due ? new Date(a.due) - new Date(b.due) : 0;
+  });
+  const counts = { overdue:0, urgent:0, soon:0, submitted:0 };
+  sorted.forEach(a => {
+    const c = classifyDue(a.due, a.submitted);
+    if (counts[c] !== undefined) counts[c]++;
+  });
+  document.getElementById('c-overdue').textContent = counts.overdue;
+  document.getElementById('c-urgent').textContent = counts.urgent;
+  document.getElementById('c-week').textContent = sorted.filter(a => classifyDue(a.due,a.submitted)==='soon').length;
+  document.getElementById('c-done').textContent = counts.submitted;
+
+  const list = document.getElementById('asgn-list');
+  if (!sorted.length) { list.innerHTML = '<div class="empty">No assignments loaded.<br><span style="font-size:11px">Paste your Canvas iCal URL in ⚙ settings, then tap ↺ sync</span></div>'; }
+  else list.innerHTML = sorted.map(a => {
+    const cls = classifyDue(a.due, a.submitted);
+    const tc = urgencyTextClass[cls];
+    return `<div class="asgn" onclick="if('${a.url}'!=='undefined')window.open('${a.url}','_blank')">
+      <div class="asgn-urgency" style="background:${urgencyColor[cls]}"></div>
+      <div class="asgn-info">
+        <div class="asgn-name">${a.name}</div>
+        <div class="asgn-course">${a.course}</div>
+      </div>
+      <div class="asgn-due">
+        <div class="asgn-time ${tc}">${a.submitted ? '✓ done' : dueLabel(a.due, cls)}</div>
+        <div class="asgn-date">${a.due ? new Date(a.due).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Calendar
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('cal-strip').innerHTML = Array.from({length:7},(_,i) => {
+    const d = new Date(today); d.setDate(today.getDate()+i);
+    const hasDue = canvasData.some(a => {
+      if (!a.due || a.submitted) return false;
+      const dd = new Date(a.due); dd.setHours(0,0,0,0);
+      return dd.getTime() === d.getTime();
+    });
+    return `<div class="cal-day${i===0?' today':''}${hasDue?' has-due':''}">
+      <div class="cal-dn">${d.toLocaleDateString('en-US',{weekday:'short'}).slice(0,2)}</div>
+      <div class="cal-num">${d.getDate()}</div>
+      ${hasDue ? '<div class="cal-pip"></div>' : '<div style="height:8px"></div>'}
+    </div>`;
+  }).join('');
+}
+
+// ─── Todos ─────────────────────────────────────────────────────────────────
+function switchCat(cat, el) {
+  activeTodoCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const labels = { academic:'Academic', work:'Work', personal:'Personal', code:'Code' };
+  document.getElementById('todo-cat-label').textContent = labels[cat];
+  renderTodos();
+}
+
+function renderTodos() {
+  const filtered = todos.filter(t => t.cat === activeTodoCat);
+  const list = document.getElementById('todo-list');
+  if (!filtered.length) { list.innerHTML = `<div class="empty" style="padding:20px 0">No ${activeTodoCat} tasks yet. Add one below!</div>`; }
+  else list.innerHTML = filtered.map(t => `
+    <div class="todo-item">
+      <div class="todo-check${t.done?' done':''}" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
+      <div class="todo-info" style="flex:1;min-width:0">
+        <div class="todo-text${t.done?' done':''}">${t.text}</div>
+        ${t.due?`<div class="todo-meta">due: ${t.due}</div>`:''}
+      </div>
+      <button class="todo-del" onclick="deleteTodo(${t.id})">✕</button>
+    </div>`).join('');
+
+  // Update counts
+  ['academic','work','personal','code'].forEach(c => {
+    document.getElementById('cnt-'+c).textContent = todos.filter(t => t.cat===c && !t.done).length;
+  });
+}
+
+function addTodo() {
+  const inp = document.getElementById('todo-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  todos.push({ id: Date.now(), text, cat: activeTodoCat, done: false, created: new Date().toISOString() });
+  saveTodos();
+  inp.value = '';
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const t = todos.find(t => t.id === id);
+  if (t) { t.done = !t.done; saveTodos(); renderTodos(); }
+}
+
+async function deleteTodo(id) {
+  await sbDelete('todos', id);
+  todos = todos.filter(t => t.id !== id);
+  localStorage.setItem('ash_todos2', JSON.stringify(todos));
+  renderTodos();
+}
+
+function clearDoneTodos() {
+  todos = todos.filter(t => !(t.cat === activeTodoCat && t.done));
+  saveTodos(); renderTodos();
+}
+
+
+// ─── Expenses ──────────────────────────────────────────────────────────────
+const expColors = { food:'#f59e0b', transport:'#38bdf8', school:'#8b7cf8', entertainment:'#fb7185', health:'#4ade80', other:'#6b6b8a' };
+const expIcons = { food:'🍔', transport:'🚗', school:'📚', entertainment:'🎮', health:'💊', other:'📦' };
+
+function changeMonth(dir) {
+  viewMonth.setMonth(viewMonth.getMonth() + dir);
+  renderExpenses();
+}
+
+function renderExpenses() {
+  const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+  const monthExp = expenses.filter(e => {
+    const d = new Date(e.date);
+    return d.getFullYear() === y && d.getMonth() === m;
+  });
+  document.getElementById('month-label').textContent = viewMonth.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const total = monthExp.reduce((s,e) => s+e.amount, 0);
+  document.getElementById('exp-total-amt').textContent = '$' + total.toFixed(2);
+
+  // Breakdown
+  const bycat = {};
+  monthExp.forEach(e => { bycat[e.cat] = (bycat[e.cat]||0) + e.amount; });
+  const sorted = Object.entries(bycat).sort((a,b) => b[1]-a[1]);
+  document.getElementById('exp-breakdown').innerHTML = sorted.length ? sorted.map(([cat, amt]) => {
+    const pct = total > 0 ? (amt/total*100).toFixed(0) : 0;
+    return `<div class="exp-bar-wrap">
+      <div class="exp-bar-label">
+        <span class="cat-name">${expIcons[cat]||'📦'} ${cat}</span>
+        <span class="cat-amt" style="color:${expColors[cat]||'#fff'}">$${amt.toFixed(2)} <span style="color:var(--muted);font-size:10px">${pct}%</span></span>
+      </div>
+      <div class="exp-bar-track"><div class="exp-bar-fill" style="width:${pct}%;background:${expColors[cat]||'#888'}"></div></div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);font-size:12px;font-family:var(--mono)">No expenses this month</div>';
+
+  // List (newest first)
+  const recent = [...monthExp].sort((a,b) => new Date(b.date)-new Date(a.date));
+  document.getElementById('exp-list').innerHTML = recent.length ? recent.map(e => `
+    <div class="exp-item">
+      <div class="exp-icon" style="background:${expColors[e.cat]||'#333'}22">${expIcons[e.cat]||'📦'}</div>
+      <div class="exp-info">
+        <div class="exp-desc">${e.desc}</div>
+        <div class="exp-cat">${e.cat}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="exp-amt" style="color:${expColors[e.cat]||'var(--text)'}">$${e.amount.toFixed(2)}</div>
+        <div class="exp-date">${new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      </div>
+    </div>`).join('') : '<div class="empty" style="padding:16px 0">No transactions this month</div>';
+}
+
+function addExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amt = parseFloat(document.getElementById('exp-amt').value);
+  const cat = document.getElementById('exp-cat-sel').value;
+  if (!desc || isNaN(amt) || amt <= 0) { toast('Enter a description and amount'); return; }
+  expenses.push({ id: Date.now(), desc, amount: amt, cat, date: new Date().toISOString() });
+  saveExpenses();
+  document.getElementById('exp-desc').value = '';
+  document.getElementById('exp-amt').value = '';
+  renderExpenses();
+  toast('Expense logged ✓');
+}
+
+function exportExpenses() {
+  const csv = ['Date,Description,Category,Amount'].concat(
+    expenses.map(e => `${new Date(e.date).toLocaleDateString()},${e.desc},${e.cat},$${e.amount.toFixed(2)}`)
+  ).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'expenses.csv';
+  a.click();
+}
+
+// ─── Grades ────────────────────────────────────────────────────────────────
+function renderGrades() {
+  const list = document.getElementById('grades-list');
+  if (!grades.length) { list.innerHTML = '<div class="empty">No courses yet. Add one below!</div>'; updateGPAStats(); return; }
+  list.innerHTML = grades.map((g, gi) => {
+    const total = g.items.reduce((s,i) => s + i.score, 0);
+    const maxTotal = g.items.reduce((s,i) => s + i.max, 0);
+    const pct = maxTotal > 0 ? (total/maxTotal*100) : 0;
+    const letter = pct >= 90 ? 'A' : pct >= 80 ? 'B' : pct >= 70 ? 'C' : pct >= 60 ? 'D' : 'F';
+    const gradeColor = pct >= 90 ? 'var(--green)' : pct >= 80 ? 'var(--sky)' : pct >= 70 ? 'var(--amber)' : 'var(--rose)';
+    const projection = calcProjection(g, pct);
+    return `<div class="grade-course-card">
+      <div class="grade-course-header">
+        <div>
+          <div class="grade-course-name">${g.name}</div>
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">${pct.toFixed(1)}% · ${total.toFixed(0)}/${maxTotal}</div>
+        </div>
+        <div class="grade-badge grade-${letter}">${letter}</div>
+      </div>
+      <div class="grade-pct-bar"><div class="grade-pct-fill" style="width:${pct}%;background:${gradeColor}"></div></div>
+      ${g.items.length ? `<div style="margin-bottom:10px">${g.items.map(item => `
+        <div class="grade-item">
+          <span class="grade-item-name">${item.name}</span>
+          <span class="grade-item-score" style="color:${item.score/item.max>=0.9?'var(--green)':item.score/item.max>=0.7?'var(--amber)':'var(--rose)'}">${item.score}/${item.max} (${(item.score/item.max*100).toFixed(0)}%)</span>
+        </div>`).join('')}
+      </div>` : ''}
+      ${projection ? `<div class="grade-projection">${projection}</div>` : ''}
+      <div class="add-grade-row">
+        <input class="add-grade-input" id="gi-name-${gi}" placeholder="Item name (e.g. Midterm)" />
+        <input class="add-grade-input" id="gi-score-${gi}" type="number" placeholder="Score" style="width:80px"/>
+        <input class="add-grade-input" id="gi-max-${gi}" type="number" placeholder="Max" style="width:70px"/>
+        <button class="add-grade-btn" onclick="addGradeItem(${gi})">+ Add</button>
+      </div>
+      <button class="card-action" style="margin-top:8px;display:block" onclick="deleteCourse(${gi})">remove course</button>
+    </div>`;
+  }).join('');
+  updateGPAStats();
+}
+
+function calcProjection(g, currentPct) {
+  if (g.items.length === 0) return null;
+  const earned = g.items.reduce((s,i) => s+i.score, 0);
+  const possible = g.items.reduce((s,i) => s+i.max, 0);
+  const remaining = g.targetMax || 100;
+  if (currentPct >= 90) return `<strong>On track for A!</strong> Keep it up — current avg ${currentPct.toFixed(1)}%`;
+  const needed90 = ((90/100) * (possible + remaining) - earned);
+  const needed80 = ((80/100) * (possible + remaining) - earned);
+  if (needed90 <= remaining) return `Need <strong>${needed90.toFixed(0)}/${remaining} (${(needed90/remaining*100).toFixed(0)}%)</strong> on remaining work for an A`;
+  if (needed80 <= remaining) return `A is out of reach — need <strong>${needed80.toFixed(0)}/${remaining} (${(needed80/remaining*100).toFixed(0)}%)</strong> for a B`;
+  return `Current: ${currentPct.toFixed(1)}% — add grades to see what you need for each letter`;
+}
+
+function updateGPAStats() {
+  document.getElementById('g-courses').textContent = grades.length;
+  if (!grades.length) { document.getElementById('g-gpa').textContent = '—'; return; }
+  const gpas = grades.map(g => {
+    const t = g.items.reduce((s,i)=>s+i.score,0);
+    const m = g.items.reduce((s,i)=>s+i.max,0);
+    const p = m>0?t/m*100:0;
+    return p>=90?4:p>=80?3:p>=70?2:p>=60?1:0;
+  });
+  document.getElementById('g-gpa').textContent = (gpas.reduce((s,g)=>s+g,0)/gpas.length).toFixed(2);
+}
+
+function addGradeItem(gi) {
+  const name = document.getElementById(`gi-name-${gi}`).value.trim();
+  const score = parseFloat(document.getElementById(`gi-score-${gi}`).value);
+  const max = parseFloat(document.getElementById(`gi-max-${gi}`).value);
+  if (!name || isNaN(score) || isNaN(max)) { toast('Fill in name, score, and max'); return; }
+  grades[gi].items.push({ name, score, max });
+  saveGrades(); renderGrades();
+}
+
+function addCourse() {
+  const name = prompt('Course name (e.g. CS6850 - ML Systems):');
+  if (!name) return;
+  const target = parseInt(prompt('Total remaining points possible (e.g. 300):') || '300');
+  grades.push({ name, items: [], targetMax: target || 300 });
+  saveGrades(); renderGrades();
+}
+
+async function deleteCourse(gi) {
+  if (!confirm('Remove this course?')) return;
+  const g = grades[gi];
+  if (g) await sbDelete('grades', g.id);
+  grades.splice(gi, 1);
+  localStorage.setItem('ash_grades2', JSON.stringify(grades));
+  renderGrades();
+}
+
+
+// ─── Chat ──────────────────────────────────────────────────────────────────
+async function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = ''; inp.style.height = 'auto';
+  appendChatMsg(msg, 'user');
+  const tid = showTyping();
+  try {
+    const reply = await callClaude(msg);
+    removeTyping(tid);
+    appendChatMsg(reply, 'assistant');
+  } catch(e) { removeTyping(tid); appendChatMsg('Error: ' + e.message, 'assistant'); }
+}
+
+function appendChatMsg(text, role) {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = `msg-row ${role}`;
+  div.innerHTML = `<div class="bubble">${text}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+let typingId = 0;
+function showTyping() {
+  const id = ++typingId;
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.id = `t${id}`; div.className = 'msg-row assistant';
+  div.innerHTML = `<div class="bubble"><div class="typing-bubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+function removeTyping(id) { const el = document.getElementById(`t${id}`); if(el) el.remove(); }
+
+async function callClaude(msg) {
+  const s = cfg();
+  if (!s.apiKey) return "Add your free Gemini API key in ⚙ settings to chat with me! Get one free at aistudio.google.com";
+
+  const now = new Date();
+  const canvasCtx = canvasData.length ? '\nCANVAS ASSIGNMENTS:\n' + canvasData.slice(0,12).map(a => {
+    const h = a.due ? Math.round((new Date(a.due)-now)/3600000) : null;
+    const st = h===null?'no due date':h<0?`OVERDUE ${Math.abs(h)}h`:h<168?`due in ${h}h`:'due later';
+    return `- ${a.name} [${a.course}] ${st}`;
+  }).join('\n') : '';
+
+  const todosCtx = todos.filter(t=>!t.done).length ?
+    '\nPENDING TODOS:\n' + todos.filter(t=>!t.done).map(t=>`- [${t.cat}] ${t.text}`).join('\n') : '';
+
+  const m = now.getMonth(), y = now.getFullYear();
+  const monthExp = expenses.filter(e=>{const d=new Date(e.date);return d.getMonth()===m&&d.getFullYear()===y;});
+  const expCtx = monthExp.length ?
+    `\nEXPENSES THIS MONTH: $${monthExp.reduce((s,e)=>s+e.amount,0).toFixed(2)} total\n` +
+    Object.entries(monthExp.reduce((acc,e)=>{acc[e.cat]=(acc[e.cat]||0)+e.amount;return acc},{}))
+      .map(([c,a])=>`- ${c}: $${a.toFixed(2)}`).join('\n') : '';
+
+  const gradesCtx = grades.length ? '\nGRADES:\n' + grades.map(g=>{
+    const t=g.items.reduce((s,i)=>s+i.score,0),mx=g.items.reduce((s,i)=>s+i.max,0);
+    const p=mx>0?(t/mx*100).toFixed(1)+'%':'no data';
+    return `- ${g.name}: ${p}`;
+  }).join('\n') : '';
+
+  const systemPrompt = `You are Ash, a smart personal assistant for ${s.name}. Today: ${now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}. City: ${s.city}.
+${s.context ? `ABOUT USER:\n${s.context}` : ''}
+${canvasCtx}${todosCtx}${expCtx}${gradesCtx}
+
+Be concise, direct, warm. Answer using the context above. If asked to add a todo or log an expense, confirm you've done it. Keep replies under 120 words unless detail is needed.`;
+
+  // Build Gemini conversation contents
+  // Gemini requires alternating user/model roles — prepend system as first user turn
+  const geminiContents = [];
+  // System context as opening exchange
+  geminiContents.push({ role: 'user', parts: [{ text: systemPrompt + '\n\nAcknowledge briefly that you are ready.' }] });
+  geminiContents.push({ role: 'model', parts: [{ text: `Got it — I'm Ash, ready to help ${s.name}!` }] });
+  // Add conversation history (last 14 messages)
+  chatHistory.slice(-14).forEach(h => {
+    geminiContents.push({ role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] });
+  });
+  // Add current message
+  geminiContents.push({ role: 'user', parts: [{ text: msg }] });
+
+  // Try models in order — 2.5-flash is the current free tier default
+  const models = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite-preview-06-17',
+    'gemini-2.0-flash',
+  ];
+
+  const body = JSON.stringify({
+    contents: geminiContents,
+    generationConfig: { maxOutputTokens: 512, temperature: 0.7 }
+  });
+
+  let lastError = '';
+  for (const model of models) {
+    // On 429, wait 2s then retry same model once before moving on
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
+
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${s.apiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+      );
+
+      if (resp.ok) {
+        const data = await resp.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '...';
+        chatHistory.push({ role:'user', content: msg });
+        chatHistory.push({ role:'assistant', content: reply });
+        parseActions(msg);
+        return reply;
+      }
+
+      const errData = await resp.json().catch(() => ({}));
+      const errMsg = errData?.error?.message || '';
+
+      if (resp.status === 400 && (errMsg.includes('API_KEY') || errMsg.includes('API key'))) {
+        throw new Error('Invalid API key — re-enter your Gemini key in ⚙ settings');
+      }
+      if (resp.status === 429) {
+        lastError = '429';
+        continue; // retry after wait
+      }
+      // Any other error — try next model
+      lastError = errMsg || `${resp.status}`;
+      break;
+    }
+  }
+
+  // All models failed
+  if (lastError === '429') {
+    throw new Error("Gemini free tier is busy right now. Wait 10 seconds and try again — or ask a shorter question.");
+  }
+  throw new Error(lastError || 'All Gemini models failed');
+}
+
+function parseActions(msg) {
+  const lower = msg.toLowerCase();
+  const addMatch = msg.match(/(?:add (?:a )?todo[:\s]+|remind me to |add task[:\s]+)(.+)/i);
+  if (addMatch) {
+    const catMatch = lower.match(/\b(academic|work|personal|code)\b/);
+    const cat = catMatch ? catMatch[1] : 'personal';
+    todos.push({ id:Date.now(), text:addMatch[1].replace(new RegExp(`\\b(academic|work|personal|code)\\b`,'i'),'').trim(), cat, done:false, created:new Date().toISOString() });
+    saveTodos();
+  }
+  const expMatch = msg.match(/(?:spent|paid|add expense)[:\s]+\$?([\d.]+)\s+(?:on\s+)?(.+)/i);
+  if (expMatch) {
+    const amt = parseFloat(expMatch[1]);
+    const desc = expMatch[2].trim();
+    const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery'],transport:['uber','gas','bus'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
+    let cat = 'other';
+    for(const[c,kws]of Object.entries(catMap)){if(kws.some(k=>desc.includes(k))){cat=c;break;}}
+    expenses.push({ id:Date.now(), desc, amount:amt, cat, date:new Date().toISOString() });
+    saveExpenses();
+  }
+}
+
+// ─── Voice ────────────────────────────────────────────────────────────────
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { toast('Voice not supported — try Chrome'); return; }
+  if (isRecording) { recognition?.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR(); recognition.lang='en-US'; recognition.interimResults=true; recognition.continuous=false;
+  recognition.onstart = () => { isRecording=true; document.getElementById('chat-mic').classList.add('rec'); };
+  recognition.onresult = e => {
+    let final='',interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
+    document.getElementById('chat-input').value=final||interim;
+    if(final){recognition.stop();setTimeout(()=>sendChat(),200);}
+  };
+  recognition.onend = () => { isRecording=false; document.getElementById('chat-mic').classList.remove('rec'); };
+  recognition.onerror = () => { isRecording=false; document.getElementById('chat-mic').classList.remove('rec'); };
+  recognition.start();
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function handleChatKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+function toast(msg) {
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--b3);border-radius:20px;padding:8px 18px;font-size:12px;color:var(--text);z-index:99;white-space:nowrap;font-family:var(--mono);animation:fadeUp .3s ease`;
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2400);
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  initSupabase();
+  const synced = await loadFromSupabase();
+  renderCanvas();
+  renderTodos();
+  renderExpenses();
+  renderGrades();
+  const s = cfg();
+  if (s.icalUrl) syncCanvas();
+  if (!s.apiKey) setTimeout(() => { toast('⚙ Get a free Gemini key at aistudio.google.com'); }, 2000);
+  // Show sync status in topbar
+  updateSyncBadge();
+  if (SB && synced) setTimeout(() => toast(`Cloud sync active — ID: ${uid().slice(0,12)}...`), 800);
+}
+
+async function debugConnection() {
+  const out = document.getElementById('debug-out');
+  out.style.display = 'block';
+  out.textContent = 'Checking...';
+
+  const sbUrl  = localStorage.getItem('ash_sb_url') || '(empty)';
+  const sbKey  = localStorage.getItem('ash_sb_key') || '(empty)';
+  const userId = localStorage.getItem('ash_uid')    || '(empty)';
+  const apiKey = localStorage.getItem('ash_api')    || '(empty)';
+
+  const keyPreview = sbKey !== '(empty)' ? sbKey.slice(0,20) + '...' : '(empty)';
+  const apiPreview = apiKey !== '(empty)' ? apiKey.slice(0,12) + '...' : '(empty)';
+
+  let lines = [
+    `SB URL:  ${sbUrl}`,
+    `SB Key:  ${keyPreview}`,
+    `User ID: ${userId}`,
+    `Gemini:  ${apiPreview}`,
+    `SB client: ${SB ? '✓ initialized' : '✗ null'}`,
+    '---',
+  ];
+
+  // Re-init Supabase with whatever is currently saved
+  initSupabase();
+  lines.push(`After re-init: ${SB ? '✓ connected' : '✗ still null'}`);
+
+  if (SB) {
+    try {
+      const { data, error } = await SB.from('expenses').select('*').eq('user_id', userId).limit(5);
+      if (error) {
+        lines.push(`Query error: ${error.message}`);
+      } else {
+        lines.push(`Expenses found: ${data.length} rows`);
+        if (data.length > 0) lines.push(`First: ${data[0].desc} $${data[0].amount}`);
+      }
+    } catch(e) {
+      lines.push(`Fetch threw: ${e.message}`);
+    }
+  } else {
+    lines.push('Cannot query — SB not initialized');
+    if (sbUrl === '(empty)') lines.push('❌ Missing Supabase URL');
+    if (sbKey === '(empty)') lines.push('❌ Missing Supabase Key');
+    if (typeof supabase === 'undefined') lines.push('❌ Supabase library not loaded');
+  }
+
+  out.textContent = lines.join('\n');
+  updateSyncBadge();
+}
+
+function updateSyncBadge() {
+  const badge = document.getElementById('sync-badge');
+  if (!badge) return;
+  if (SB) {
+    badge.textContent = '☁ synced';
+    badge.style.color = '#2dd4bf';
+  } else {
+    badge.textContent = '⚠ local only';
+    badge.style.color = 'var(--muted)';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
