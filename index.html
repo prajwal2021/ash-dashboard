@@ -1596,9 +1596,10 @@ async function sendChat(useTts) {
   appendChatMsg(msg, 'user');
   const tid = showTyping();
   try {
-    const reply = await callClaude(msg);
+    let reply = await callClaude(msg);
     removeTyping(tid);
-    appendChatMsg(reply, 'assistant');
+    reply = reply.replace(/\s*ADD_EXPENSE:[\d.]+:[^\n]+/gi, '').trim();
+    appendChatMsg(reply || 'Done!', 'assistant');
     if (fromVoice && typeof speechSynthesis !== 'undefined') speakReply(reply);
     else if (fromVoice) lastInputWasVoice = false;
   } catch(e) { removeTyping(tid); appendChatMsg('Error: ' + e.message, 'assistant'); lastInputWasVoice = false; }
@@ -1608,9 +1609,9 @@ function speakReply(text) {
   if (!text) return;
   const clean = text.replace(/\[[^\]]*\]/g,'').replace(/\([^)]*\)/g,'').replace(/\*\*/g,'').replace(/\n/g,' ').slice(0,350);
   const u = new SpeechSynthesisUtterance(clean);
-  u.volume = 1;
-  u.rate = 0.88;
-  u.pitch = 1.15;
+  u.volume = 2;
+  u.rate = 1.5;
+  u.pitch = 2;
   const voices = speechSynthesis.getVoices();
   const female = voices.find(v=>/samantha|karen|victoria|moira|tessa/i.test(v.name)) || voices.find(v=>v.lang.startsWith('en')&&/female|woman/i.test(v.name)) || voices.find(v=>v.lang.startsWith('en'));
   if (female) u.voice = female;
@@ -1672,7 +1673,9 @@ async function callClaude(msg) {
 ${s.context ? `ABOUT USER:\n${s.context}` : ''}
 ${canvasCtx}${todosCtx}${expCtx}${gradesCtx}
 
-Be concise, direct, warm. Answer using the context above. If asked to add a todo or log an expense, confirm you've done it. Keep replies under 120 words unless detail is needed.`;
+Be concise, direct, warm. Answer using the context above. Keep replies under 120 words unless detail is needed.
+
+IMPORTANT for expenses: When the user asks to add/log an expense (e.g. "add expense 50 on coffee", "spent 30 on lunch"), you MUST add this exact line somewhere in your reply so the app can log it: ADD_EXPENSE:AMOUNT:DESCRIPTION (e.g. ADD_EXPENSE:50:coffee or ADD_EXPENSE:25.50:groceries). Extract amount and description from their message.`;
 
   // Build Gemini conversation contents
   // Gemini requires alternating user/model roles — prepend system as first user turn
@@ -1716,6 +1719,7 @@ Be concise, direct, warm. Answer using the context above. If asked to add a todo
         chatHistory.push({ role:'user', content: msg });
         chatHistory.push({ role:'assistant', content: reply });
         parseActions(msg);
+        parseActionsFromReply(reply);
         return reply;//
       }
 
@@ -1762,9 +1766,8 @@ function parseActions(msg) {
   for (const re of expPatterns) {
     const expMatch = msg.match(re);
     if (expMatch) {
-      const g1 = expMatch[1].trim(), g2 = expMatch[2].replace(/\s*(?:dollars?|bucks?|rs?\.?)\s*$/gi,'').trim();
-      const amt = /^[\d.]+$/.test(g1) ? parseFloat(g1) : parseFloat(g2);
-      const desc = /^[\d.]+$/.test(g1) ? g2 : g1;
+      const amt = parseFloat(expMatch[1]);
+      const desc = expMatch[2].replace(/\s*(?:dollars?|bucks?)\s*$/gi,'').trim();
       if (!isNaN(amt) && amt > 0 && desc.length > 1) {
         const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery','meal'],transport:['uber','gas','bus','ride','lyft'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
         let cat = 'other';
@@ -1774,6 +1777,22 @@ function parseActions(msg) {
         renderExpenses();
         break;
       }
+    }
+  }
+}
+
+function parseActionsFromReply(reply) {
+  const m = reply.match(/ADD_EXPENSE:([\d.]+):([^\n.]+?)(?:\s*[.\n]|$)/i);
+  if (m) {
+    const amt = parseFloat(m[1]);
+    const desc = m[2].trim().replace(/\s+/g,' ');
+    if (!isNaN(amt) && amt > 0 && desc) {
+      const catMap = {food:['food','lunch','dinner','breakfast','coffee','restaurant','grocery','meal'],transport:['uber','gas','bus','ride','lyft'],school:['book','supply','tuition'],entertainment:['netflix','movie','game'],health:['gym','medicine','doctor']};
+      let cat = 'other';
+      for(const[c,kws]of Object.entries(catMap)){if(kws.some(k=>desc.toLowerCase().includes(k))){cat=c;break;}}
+      expenses.push({ id:Date.now(), desc, amount:amt, cat, date:new Date().toISOString() });
+      saveExpenses();
+      renderExpenses();
     }
   }
 }
